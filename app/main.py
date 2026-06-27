@@ -1,6 +1,8 @@
+import asyncio
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from app.config import settings
+from app.judge.engine import judge_loop
 
 app = FastAPI(title="程序设计裁判系统")
 
@@ -11,6 +13,8 @@ async def startup():
     await init_db()
     # 创建默认管理员（后续 Task 6 会改为 seed）
     await _seed_admin()
+    # 启动判题引擎后台任务
+    asyncio.create_task(judge_loop())
 
 
 async def _seed_admin():
