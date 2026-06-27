@@ -75,6 +75,7 @@ async def _judge_submission(submission_id: int):
         work_dir = tempfile.mkdtemp(dir=settings.RUNS_DIR)
         os.makedirs(work_dir, exist_ok=True)
 
+        judging = None
         try:
             # 创建 Judging 记录
             judging = Judging(
@@ -93,10 +94,7 @@ async def _judge_submission(submission_id: int):
                 judging.ended = datetime.utcnow()
                 submission.state = SubmissionState.DONE
                 await db.commit()
-                # 写入编译错误到 judgerun（便于前端展示）
-                run = JudgeRun(judging_id=judging.id, testcase_id=None, result=Verdict.CE, output=compile_output)
-                db.add(run)
-                await db.commit()
+                # CE result is stored on the Judging record itself
                 return
 
             # 逐一运行测试点
@@ -138,11 +136,10 @@ async def _judge_submission(submission_id: int):
             await _update_scoreboard(db, submission, final_verdict, final_score, contest)
 
         except Exception as e:
-            judging.result = Verdict.RTE
-            judging.ended = datetime.utcnow()
+            if judging:
+                judging.result = Verdict.RTE
+                judging.ended = datetime.utcnow()
             submission.state = SubmissionState.DONE
-            run = JudgeRun(judging_id=judging.id, testcase_id=None, result=Verdict.RTE, output=str(e))
-            db.add(run)
             await db.commit()
 
         finally:

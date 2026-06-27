@@ -44,7 +44,7 @@ def calculate_ioi_result(
     返回 (final_verdict, total_score)
     """
     if total_testcases == 0:
-        return Verdict.AC.value, 100.0
+        return Verdict.AC.value, 0.0
 
     points_per_case = 100.0 / total_testcases
     total_score = 0.0
