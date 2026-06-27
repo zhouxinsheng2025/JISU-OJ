@@ -105,3 +105,89 @@ async def edit_contest_action(
 async def toggle_contest_action(contest_id: int, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
     await contest_service.toggle_contest(db, contest_id)
     return RedirectResponse(url="/jury/contests", status_code=303)
+
+
+# ── 队伍列表 ──
+@router.get("/teams")
+async def list_teams(request: Request, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import select
+    from app.models import UserRole
+    result = await db.execute(
+        select(User).where(User.role == UserRole.TEAM).order_by(User.id)
+    )
+    teams = list(result.scalars().all())
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/teams.html",
+        {"request": request, "user": user, "teams": teams},
+    )
+
+
+# ── 创建队伍 ──
+@router.get("/teams/new")
+async def new_team_page(request: Request, user: User = Depends(require_role("jury"))):
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/team_form.html",
+        {"request": request, "user": user, "team": None},
+    )
+
+
+@router.post("/teams/new")
+async def create_team(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    teamname: str = Form(...),
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.services.auth_service import hash_password
+    from app.models import UserRole
+    team = User(
+        username=username,
+        password_hash=hash_password(password),
+        teamname=teamname,
+        role=UserRole.TEAM,
+    )
+    db.add(team)
+    await db.commit()
+    return RedirectResponse(url="/jury/teams", status_code=303)
+
+
+# ── 编辑队伍 ──
+@router.get("/teams/{team_id}/edit")
+async def edit_team_page(team_id: int, request: Request, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import select
+    result = await db.execute(select(User).where(User.id == team_id))
+    team = result.scalar_one_or_none()
+    if team is None:
+        return RedirectResponse(url="/jury/teams", status_code=303)
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/team_form.html",
+        {"request": request, "user": user, "team": team},
+    )
+
+
+@router.post("/teams/{team_id}/edit")
+async def edit_team(
+    team_id: int,
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(""),
+    teamname: str = Form(...),
+    enabled: str = Form("1"),
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import select
+    result = await db.execute(select(User).where(User.id == team_id))
+    team = result.scalar_one_or_none()
+    if team is None:
+        return RedirectResponse(url="/jury/teams", status_code=303)
+    team.username = username
+    team.teamname = teamname
+    team.enabled = (enabled == "1")
+    if password:
+        from app.services.auth_service import hash_password
+        team.password_hash = hash_password(password)
+    await db.commit()
+    return RedirectResponse(url="/jury/teams", status_code=303)
