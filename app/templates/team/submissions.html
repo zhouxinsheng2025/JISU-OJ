@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}我的提交记录{% endblock %}
+{% block nav %}
+<a href="/team/" class="hover:text-blue-400">仪表盘</a>
+<a href="/team/problems" class="hover:text-blue-400">题目</a>
+<a href="/team/submissions" class="text-blue-400 font-semibold">提交记录</a>
+{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">我的提交记录</h1>
+        <a href="/team/problems" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition">
+            &larr; 返回题目列表
+        </a>
+    </div>
+
+    {% if submission_data %}
+    <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-900 text-gray-400 text-left">
+                    <th class="px-4 py-3 font-medium">#</th>
+                    <th class="px-4 py-3 font-medium">题目</th>
+                    <th class="px-4 py-3 font-medium">语言</th>
+                    <th class="px-4 py-3 font-medium">提交时间</th>
+                    <th class="px-4 py-3 font-medium">状态</th>
+                    <th class="px-4 py-3 font-medium">结果</th>
+                    <th class="px-4 py-3 font-medium">得分</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700">
+                {% for item in submission_data %}
+                {% set sub = item.submission %}
+                {% set judging = item.judging %}
+                <tr class="hover:bg-gray-750 transition">
+                    <td class="px-4 py-3 text-gray-400 font-mono">
+                        <a href="/team/submissions/{{ sub.id }}" class="text-blue-400 hover:text-blue-300">
+                            {{ sub.id }}
+                        </a>
+                    </td>
+                    <td class="px-4 py-3">
+                        <a href="/team/submissions/{{ sub.id }}" class="text-white hover:text-blue-400 transition">
+                            {{ sub.problem.title }}
+                        </a>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-gray-300 font-mono text-xs bg-gray-700 px-2 py-1 rounded">
+                            {{ sub.language }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-gray-400 text-xs">
+                        {{ sub.submit_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if sub.state == "queued" %}
+                        <span class="text-yellow-400 font-medium">排队中</span>
+                        {% elif sub.state == "judging" %}
+                        <span class="text-blue-400 font-medium">判题中</span>
+                        {% elif sub.state == "done" %}
+                        <span class="text-green-400 font-medium">已完成</span>
+                        {% else %}
+                        <span class="text-gray-400">{{ sub.state }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if judging and judging.result %}
+                            {% if judging.result == "AC" %}
+                            <span class="text-green-400 font-bold font-mono">AC</span>
+                            {% elif judging.result == "WA" %}
+                            <span class="text-red-400 font-bold font-mono">WA</span>
+                            {% elif judging.result == "TLE" %}
+                            <span class="text-yellow-400 font-bold font-mono">TLE</span>
+                            {% elif judging.result == "MLE" %}
+                            <span class="text-yellow-400 font-bold font-mono">MLE</span>
+                            {% elif judging.result == "RTE" %}
+                            <span class="text-orange-400 font-bold font-mono">RTE</span>
+                            {% elif judging.result == "CE" %}
+                            <span class="text-purple-400 font-bold font-mono">CE</span>
+                            {% elif judging.result == "OLE" %}
+                            <span class="text-pink-400 font-bold font-mono">OLE</span>
+                            {% elif judging.result == "PE" %}
+                            <span class="text-indigo-400 font-bold font-mono">PE</span>
+                            {% else %}
+                            <span class="text-gray-400">{{ judging.result }}</span>
+                            {% endif %}
+                        {% else %}
+                        <span class="text-gray-500">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 font-mono">
+                        {% if judging and judging.score is not none %}
+                        <span class="text-white">{{ judging.score }}</span>
+                        {% else %}
+                        <span class="text-gray-500">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if submission_data|length >= 50 %}
+    <p class="text-gray-500 text-xs text-center mt-4">仅显示最近 50 条提交记录</p>
+    {% endif %}
+
+    {% else %}
+    <div class="bg-gray-800 rounded-lg p-12 border border-gray-700 text-center">
+        <p class="text-gray-500 text-lg mb-2">暂无提交记录</p>
+        <p class="text-gray-600 text-sm">去 <a href="/team/problems" class="text-blue-400 hover:text-blue-300">题目列表</a> 选择题目开始提交</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// 每 5 秒自动刷新，检查是否有排队或判题中的提交
+(function() {
+    var hasPending = {{ 'true' if submission_data|selectattr('submission.state', 'in', ['queued', 'judging'])|list|length > 0 else 'false' }};
+    if (hasPending) {
+        setTimeout(function() {
+            location.reload();
+        }, 5000);
+    }
+})();
+</script>
+{% endblock %}

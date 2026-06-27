@@ -53,13 +53,46 @@
     </div>
     {% endif %}
 
-    <!-- 提交入口 placeholder -->
-    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 border-dashed">
+    <!-- 提交入口 -->
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <h2 class="text-lg font-semibold text-yellow-400 mb-3">提交代码</h2>
-        <div class="text-gray-500 text-center py-8">
-            <p class="text-lg mb-2">提交功能即将上线</p>
-            <p class="text-sm">请使用后续版本中的提交功能上传您的解答</p>
+
+        {% if error %}
+        <div class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded mb-4 text-sm">
+            {{ error }}
         </div>
+        {% endif %}
+
+        <form action="/team/submit" method="POST" class="space-y-4">
+            <input type="hidden" name="problem_id" value="{{ problem.id }}">
+
+            <div>
+                <label for="language" class="block text-sm font-medium text-gray-300 mb-1">语言</label>
+                <select name="language" id="language" required
+                    class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                    <option value="">-- 请选择语言 --</option>
+                    <option value="c">C</option>
+                    <option value="cpp">C++</option>
+                    <option value="python">Python</option>
+                    <option value="java">Java</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="source_code" class="block text-sm font-medium text-gray-300 mb-1">源代码</label>
+                <textarea name="source_code" id="source_code" rows="20" required
+                    class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-green-300 text-sm font-mono focus:outline-none focus:border-blue-500"
+                    placeholder="在此粘贴您的代码..."></textarea>
+            </div>
+
+            <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-500">最大支持 256KB</span>
+                <button type="submit"
+                    class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded transition text-sm">
+                    提交
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
