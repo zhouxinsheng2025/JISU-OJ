@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(ls -la .superpowers/sdd/)",
+      "Bash(ls \"C:\\\\Users\\\\24338\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\6.0.3\\\\skills\\\\subagent-driven-development\\\\scripts\\\\*.sh\")",
+      "Read(//c/Users/24338/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.3/skills/subagent-driven-development/scripts\" 2>/dev/**)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}

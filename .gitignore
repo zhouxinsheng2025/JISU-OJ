@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+judge.db
+runs/
+*.egg-info/
+.env
