@@ -6,7 +6,16 @@
       "Bash(ls \"C:\\\\Users\\\\24338\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\6.0.3\\\\skills\\\\subagent-driven-development\\\\scripts\\\\*.sh\")",
       "Read(//c/Users/24338/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.3/skills/subagent-driven-development/scripts\" 2>/dev/**)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(bash *)",
+      "Bash(git *)",
+      "Bash(pip install *)",
+      "Bash(pip list *)",
+      "Bash(python -c \"from app.config import settings; print\\(f'DATABASE_URL={settings.DATABASE_URL}'\\); print\\(f'JWT_ALGORITHM={settings.JWT_ALGORITHM}'\\); print\\(f'FastAPI title={__import__\\(\\\\\"app.main\\\\\", fromlist=[\\\\\"app\\\\\"]\\).app.title}'\\)\")",
+      "Bash(python run.py)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/)",
+      "Bash(pkill -f \"python run.py\")",
+      "Bash(pkill -f uvicorn)"
     ]
   }
 }
