@@ -31,6 +31,11 @@ async def _seed_admin():
             await db.commit()
 
 
+# 注册路由
+from app.routers import auth
+app.include_router(auth.router)
+
+
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/team/login")
+    return RedirectResponse(url="/auth/login")

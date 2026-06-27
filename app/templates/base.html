@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}裁判系统{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-900 text-gray-100">
+    {% if user %}
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-3 flex justify-between items-center">
+        <div class="flex gap-4">
+            <span class="font-bold text-lg text-blue-400">⚖ 裁判系统</span>
+            {% block nav %}{% endblock %}
+        </div>
+        <div class="flex gap-3 items-center text-sm text-gray-400">
+            <span>{{ user.teamname }}</span>
+            <a href="/auth/logout" class="text-red-400 hover:underline">退出</a>
+        </div>
+    </nav>
+    {% endif %}
+    <main class="max-w-6xl mx-auto p-6">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

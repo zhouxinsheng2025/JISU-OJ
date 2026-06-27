@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}登录 - 裁判系统{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto mt-20">
+    <h1 class="text-3xl font-bold text-center mb-8">⚖ 程序设计裁判系统</h1>
+    <div class="bg-gray-800 rounded-lg p-8 shadow-lg">
+        <form method="POST" class="space-y-5">
+            {% if error %}
+            <div class="bg-red-900/50 border border-red-500 text-red-300 px-4 py-3 rounded">{{ error }}</div>
+            {% endif %}
+            <div>
+                <label class="block text-sm font-medium mb-1">用户名</label>
+                <input name="username" type="text" required
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">密码</label>
+                <input name="password" type="password" required
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500">
+            </div>
+            <button type="submit"
+                class="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded font-medium transition">
+                登录
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
