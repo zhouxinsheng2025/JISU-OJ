@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}计分板 - 裁判{% endblock %}
+{% block nav %}
+<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
+<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
+<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
+<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
+<a href="/jury/scoreboard" class="text-blue-400 font-semibold">计分板</a>
+{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-2xl font-bold mb-2">{{ contest.title }} - 计分板</h1>
+    <p class="text-gray-400 text-sm mb-4">裁判查看 — 显示全部真实数据</p>
+
+    <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+        <table class="w-full text-left">
+            <thead class="bg-gray-700 text-gray-300">
+                <tr>
+                    <th class="px-3 py-3 w-12 text-center">#</th>
+                    <th class="px-3 py-3">队伍</th>
+                    {% for problem in problems %}
+                    <th class="px-2 py-3 text-center font-mono text-sm">{{ problem.title|truncate(10, True, '..') }}</th>
+                    {% endfor %}
+                    <th class="px-3 py-3 text-center">解题数</th>
+                    <th class="px-3 py-3 text-center">罚时/总分</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700 font-mono text-sm">
+                {% for item in board %}
+                <tr class="hover:bg-gray-750 transition">
+                    <td class="px-3 py-2 text-center text-gray-400">{{ loop.index }}</td>
+                    <td class="px-3 py-2 font-semibold">{{ item.teamname }}</td>
+                    {% for problem in problems %}
+                    {% set cache = item.problems.get(problem.id) %}
+                    <td class="px-2 py-2 text-center">
+                        {% if cache and cache.is_correct %}
+                        <span class="text-green-400 font-bold" title="AC ({{ cache.submissions }} 次提交, {{ cache.total_time }} 罚时)">
+                            +{% if cache.submissions > 1 %}{{ cache.submissions - 1 }}{% endif %}
+                        </span>
+                        {% elif cache and not cache.is_correct %}
+                        <span class="text-red-400" title="WA ({{ cache.submissions }} 次提交)">-{{ cache.submissions }}</span>
+                        {% else %}
+                        <span class="text-gray-600">.</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td class="px-3 py-2 text-center font-bold text-blue-300">{{ item.solved }}</td>
+                    <td class="px-3 py-2 text-center text-gray-300">
+                        {% if contest.score_mode == "ioi" %}
+                        {{ item.total_score }}
+                        {% else %}
+                        {{ item.total_time }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{{ 3 + problems|length }}" class="px-4 py-12 text-center text-gray-500">
+                        <div class="text-4xl mb-2">/</div>
+                        <div>暂无排名数据</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4">
+        <a href="/jury/" class="text-gray-400 hover:text-white transition">&larr; 返回仪表盘</a>
+    </div>
+</div>
+{% endblock %}

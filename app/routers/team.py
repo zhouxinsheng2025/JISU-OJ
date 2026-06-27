@@ -7,6 +7,7 @@ from app.database import get_db
 from app.dependencies import require_role
 from app.models import User, Contest, Problem, TestCase, Submission, Judging, JudgeRun, Verdict
 from app.templates_helpers import templates
+from app.services import score_service
 
 router = APIRouter(prefix="/team", tags=["team"])
 
@@ -208,6 +209,36 @@ async def submit_code(
         db, problem.contest_id, problem_id, user.id, language, source_code
     )
     return RedirectResponse(url="/team/submissions", status_code=303)
+
+
+@router.get("/scoreboard")
+async def team_scoreboard(
+    request: Request,
+    user: User = Depends(require_role("team")),
+    db: AsyncSession = Depends(get_db),
+):
+    now = datetime.utcnow()
+    result = await db.execute(
+        select(Contest).where(
+            Contest.enabled == True,
+            Contest.start_time <= now,
+            Contest.end_time >= now,
+        ).limit(1)
+    )
+    contest = result.scalar_one_or_none()
+    if contest is None:
+        return templates.TemplateResponse(
+            f"{TEMPLATE_DIR}/dashboard.html",
+            {"request": request, "user": user, "contest": None, "error": "没有进行中的比赛"},
+        )
+    # 封榜检查
+    freeze = contest.freeze_time is not None and now >= contest.freeze_time
+    board = await score_service.get_scoreboard(db, contest.id, freeze=freeze)
+    problems = await score_service.get_contest_problems(db, contest.id)
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/scoreboard.html",
+        {"request": request, "user": user, "contest": contest, "board": board, "problems": problems, "freeze": freeze},
+    )
 
 
 @router.get("/submissions")

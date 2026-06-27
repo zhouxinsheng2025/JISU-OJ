@@ -1,16 +1,50 @@
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends, Form, Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.database import get_db
 from app.dependencies import require_role
 from app.models import User, Contest
 from app.schemas import ContestCreate
 from app.services import contest_service
+from app.services import score_service
 from app.templates_helpers import templates
 
 router = APIRouter(prefix="/jury", tags=["jury"])
 
 TEMPLATE_DIR = "jury"
+
+
+# ── 计分板 ──
+@router.get("/scoreboard")
+async def jury_scoreboard(
+    request: Request,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+    contest_id: int = Query(None),
+):
+    from datetime import datetime
+
+    if contest_id is None:
+        # 默认显示第一个启用的比赛
+        result = await db.execute(select(Contest).where(Contest.enabled == True).order_by(Contest.id.desc()).limit(1))
+        contest = result.scalar_one_or_none()
+    else:
+        result = await db.execute(select(Contest).where(Contest.id == contest_id))
+        contest = result.scalar_one_or_none()
+
+    if contest is None:
+        return templates.TemplateResponse(
+            f"{TEMPLATE_DIR}/dashboard.html",
+            {"request": request, "user": user, "error": "没有比赛"},
+        )
+
+    board = await score_service.get_scoreboard(db, contest.id, freeze=False)  # Jury 永远看真实排名
+    problems = await score_service.get_contest_problems(db, contest.id)
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/scoreboard.html",
+        {"request": request, "user": user, "contest": contest, "board": board, "problems": problems},
+    )
 
 
 # ── Dashboard ──
