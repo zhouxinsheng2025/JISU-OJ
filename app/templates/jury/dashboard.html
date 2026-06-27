@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}裁判后台 - 仪表盘{% endblock %}
+{% block nav %}
+<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
+<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
+<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
+<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
+<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
+<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">裁判后台</h1>
+<div class="grid grid-cols-3 gap-4">
+    <a href="/jury/contests" class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition">
+        <div class="text-3xl mb-2">📋</div>
+        <div class="font-semibold">比赛管理</div>
+        <div class="text-sm text-gray-400">创建和配置比赛</div>
+    </a>
+    <a href="/jury/teams" class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition">
+        <div class="text-3xl mb-2">👥</div>
+        <div class="font-semibold">队伍管理</div>
+        <div class="text-sm text-gray-400">管理参赛队伍</div>
+    </a>
+    <a href="/jury/submissions" class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition">
+        <div class="text-3xl mb-2">📤</div>
+        <div class="font-semibold">提交记录</div>
+        <div class="text-sm text-gray-400">查看所有提交</div>
+    </a>
+</div>
+{% endblock %}

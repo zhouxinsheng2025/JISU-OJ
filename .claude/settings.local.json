@@ -15,7 +15,32 @@
       "Bash(python run.py)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/)",
       "Bash(pkill -f \"python run.py\")",
-      "Bash(pkill -f uvicorn)"
+      "Bash(pkill -f uvicorn)",
+      "Bash(python -c \"from app.models import Base; print\\('models OK, tables:', list\\(Base.metadata.tables.keys\\(\\)\\)\\)\")",
+      "Bash(python -c \"from app.database import engine, async_session, init_db; print\\('database module OK'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import asyncio; from app.database import init_db; asyncio.run\\(init_db\\(\\)\\); print\\('Database created successfully'\\)\")",
+      "Bash(timeout 5 python -c ' *)",
+      "Bash(rm -f judge.db)",
+      "Bash(python -W ignore -c ' *)",
+      "Bash(handle judge.db)",
+      "Bash(lsof judge.db)",
+      "Bash(ls -la judge.db)",
+      "Bash(cp judge.db judge.db.bak)",
+      "Bash(rm -f judge.db judge.db-wal judge.db-shm)",
+      "Bash(kill -9 1449 1630 1626)",
+      "Bash(taskkill -f -im python.exe)",
+      "Bash(rm -f judge.db judge.db-wal judge.db-shm judge.db.bak)",
+      "Bash(ls judge.db)",
+      "Bash(uvicorn app.main:app --host 127.0.0.1 --port 18080)",
+      "Bash(python -c \"import urllib.request; print\\(urllib.request.urlopen\\('http://127.0.0.1:18080/'\\).status\\)\")",
+      "Bash(curl *)",
+      "Bash(kill %1)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); paths=list\\(d.get\\('paths',{}\\).keys\\(\\)\\); [print\\(p\\) for p in sorted\\(paths\\)]\")",
+      "Bash(taskkill //F //IM python.exe)",
+      "Bash(python -c \"import sys; html=sys.stdin.read\\(\\); print\\('Dashboard:', '裁判后台' in html, 'len:', len\\(html\\)\\)\")",
+      "Bash(python -c \"import sys; html=sys.stdin.read\\(\\); print\\('Contests:', '比赛管理' in html, '暂无比赛' in html, 'len:', len\\(html\\)\\)\")",
+      "Bash(python -c \"import sys; html=sys.stdin.read\\(\\); print\\('New Form:', '新建比赛' in html, 'len:', len\\(html\\)\\)\")"
     ]
   }
 }

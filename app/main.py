@@ -32,8 +32,10 @@ async def _seed_admin():
 
 
 # 注册路由
-from app.routers import auth
+from app.routers import auth, jury, team
 app.include_router(auth.router)
+app.include_router(jury.router)
+app.include_router(team.router)
 
 
 @app.get("/")
