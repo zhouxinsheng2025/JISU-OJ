@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}裁判后台 - {% if problem %}编辑题目{% else %}新建题目{% endif %}{% endblock %}
+{% block nav %}
+<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
+<a href="/jury/contests" class="text-blue-400 font-semibold">比赛</a>
+<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
+<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
+<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
+<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">{{ contest.title }} - {% if problem %}编辑题目{% else %}新建题目{% endif %}</h1>
+
+<div class="bg-gray-800 rounded-lg p-6 max-w-2xl">
+    <form method="post" action="{% if problem %}/jury/problems/{{ problem.id }}/edit{% else %}/jury/contests/{{ contest.id }}/problems/new{% endif %}">
+        <div class="mb-4">
+            <label class="block text-gray-300 mb-2" for="title">标题</label>
+            <input type="text" id="title" name="title" value="{{ problem.title if problem else '' }}" required
+                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-300 mb-2" for="description">描述</label>
+            <textarea id="description" name="description" rows="10"
+                      class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 font-mono text-sm">{{ problem.description if problem else '' }}</textarea>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-300 mb-2" for="time_limit">时间限制 (秒)</label>
+                <input type="number" id="time_limit" name="time_limit" step="0.1" min="0.1"
+                       value="{{ problem.time_limit if problem else 1.0 }}"
+                       class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-gray-300 mb-2" for="memory_limit">内存限制 (MB)</label>
+                <input type="number" id="memory_limit" name="memory_limit" min="1"
+                       value="{{ problem.memory_limit if problem else 256 }}"
+                       class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-gray-300 mb-2" for="order">顺序</label>
+                <input type="number" id="order" name="order" min="0"
+                       value="{{ problem.order if problem else 0 }}"
+                       class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition">
+                {% if problem %}保存修改{% else %}创建题目{% endif %}
+            </button>
+            <a href="/jury/contests/{{ contest.id }}/problems" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition text-center">
+                取消
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

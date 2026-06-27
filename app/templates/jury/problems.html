@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}裁判后台 - 题目管理{% endblock %}
+{% block nav %}
+<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
+<a href="/jury/contests" class="text-blue-400 font-semibold">比赛</a>
+<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
+<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
+<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
+<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">{{ contest.title }} - 题目管理</h1>
+    <a href="/jury/contests/{{ contest.id }}/problems/new" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+        + 新建题目
+    </a>
+</div>
+
+<div class="bg-gray-800 rounded-lg overflow-hidden">
+    <table class="w-full text-left">
+        <thead class="bg-gray-700 text-gray-300">
+            <tr>
+                <th class="px-4 py-3">顺序</th>
+                <th class="px-4 py-3">标题</th>
+                <th class="px-4 py-3">时间限制</th>
+                <th class="px-4 py-3">内存限制</th>
+                <th class="px-4 py-3">操作</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-700">
+            {% for problem in problems %}
+            <tr class="hover:bg-gray-750">
+                <td class="px-4 py-3">{{ problem.order }}</td>
+                <td class="px-4 py-3">{{ problem.title }}</td>
+                <td class="px-4 py-3">{{ problem.time_limit }}s</td>
+                <td class="px-4 py-3">{{ problem.memory_limit }} MB</td>
+                <td class="px-4 py-3 flex gap-2">
+                    <a href="/jury/problems/{{ problem.id }}/edit" class="text-blue-400 hover:underline">编辑</a>
+                    <a href="/jury/problems/{{ problem.id }}/testcases" class="text-green-400 hover:underline">测试数据</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="px-4 py-8 text-center text-gray-500">暂无题目</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-4">
+    <a href="/jury/contests" class="text-gray-400 hover:text-white transition">&larr; 返回比赛列表</a>
+</div>
+{% endblock %}
