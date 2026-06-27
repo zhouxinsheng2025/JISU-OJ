@@ -371,9 +371,85 @@ async def add_testcase(
 async def delete_testcase(problem_id: int, tc_id: int, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
     from sqlalchemy import select
     from app.models import TestCase
-    result = await db.execute(select(TestCase).where(TestCase.id == tc_id, TestCase.problem_id == problem_id))
     tc = result.scalar_one_or_none()
     if tc:
         await db.delete(tc)
         await db.commit()
     return RedirectResponse(url=f"/jury/problems/{problem_id}/testcases", status_code=303)
+
+
+# ── 澄清系统 ──
+
+@router.get("/clarifications")
+async def jury_clarifications(
+    request: Request,
+    contest_id: int = None,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models import Clarification
+    from sqlalchemy.orm import joinedload
+
+    if contest_id:
+        clar_result = await db.execute(
+            select(Clarification)
+            .options(joinedload(Clarification.sender))
+            .where(Clarification.contest_id == contest_id)
+            .order_by(Clarification.created_at.desc())
+        )
+    else:
+        clar_result = await db.execute(
+            select(Clarification)
+            .options(joinedload(Clarification.sender))
+            .order_by(Clarification.created_at.desc())
+        )
+    clarifications = list(clar_result.unique().scalars().all())
+
+    # 获取所有相关接收者用户
+    user_ids = set()
+    for c in clarifications:
+        user_ids.add(c.sender_id)
+        if c.recipient_id:
+            user_ids.add(c.recipient_id)
+    users_map = {}
+    if user_ids:
+        user_result = await db.execute(select(User).where(User.id.in_(user_ids)))
+        users_map = {u.id: u for u in user_result.scalars().all()}
+
+    # 获取比赛列表供筛选
+    from app.services import contest_service
+    contests = await contest_service.get_contests(db)
+
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/clarifications.html",
+        {
+            "request": request,
+            "user": user,
+            "clarifications": clarifications,
+            "users_map": users_map,
+            "contests": contests,
+            "selected_contest_id": contest_id,
+        },
+    )
+
+
+@router.post("/clarifications/{clar_id}/reply")
+async def jury_reply(
+    clar_id: int,
+    answer: str = Form(...),
+    make_public: str = Form("0"),
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models import Clarification
+    result = await db.execute(select(Clarification).where(Clarification.id == clar_id))
+    clar = result.scalar_one_or_none()
+    if clar:
+        clar.answer = answer
+        if make_public == "1":
+            clar.recipient_id = None
+        else:
+            clar.recipient_id = user.id
+        await db.commit()
+    contest_param = f"?contest_id={clar.contest_id}" if clar else ""
+    return RedirectResponse(url=f"/jury/clarifications{contest_param}", status_code=303)

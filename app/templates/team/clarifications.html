@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}问答 - 澄清系统{% endblock %}
+{% block nav %}
+<a href="/team/" class="hover:text-blue-400">仪表盘</a>
+<a href="/team/problems" class="hover:text-blue-400">题目</a>
+<a href="/team/submissions" class="hover:text-blue-400">提交记录</a>
+<a href="/team/clarifications" class="text-blue-400 font-semibold">问答</a>
+<a href="/team/scoreboard" class="hover:text-blue-400">计分板</a>
+{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">问答 / 澄清</h1>
+
+    {% if contest %}
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+        <h2 class="text-lg font-semibold mb-4">发起提问</h2>
+        <form method="POST" action="/team/clarifications/new">
+            <textarea name="question" rows="4" required
+                      class="w-full bg-gray-900 border border-gray-600 rounded px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 mb-4"
+                      placeholder="描述你的问题..."></textarea>
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-semibold transition">
+                提交问题
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <div class="bg-yellow-900 border border-yellow-700 text-yellow-200 px-4 py-3 rounded-lg mb-6">
+        当前没有进行中的比赛，无法提问。
+    </div>
+    {% endif %}
+
+    <div class="bg-gray-800 rounded-lg border border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-700">
+            <h2 class="text-lg font-semibold">问答记录</h2>
+        </div>
+
+        {% if clarifications %}
+        <div class="divide-y divide-gray-700">
+            {% for clar in clarifications %}
+            <div class="px-6 py-5">
+                <div class="flex items-start gap-3 mb-3">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-900 flex items-center justify-center text-blue-300 text-sm font-bold">
+                        Q
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm font-semibold text-blue-400">{{ clar.sender.teamname or clar.sender.username }}</span>
+                            <span class="text-xs text-gray-500">{{ clar.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                        <div class="text-white whitespace-pre-wrap">{{ clar.question }}</div>
+                    </div>
+                </div>
+
+                {% if clar.answer %}
+                <div class="flex items-start gap-3 ml-11">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-900 flex items-center justify-center text-green-300 text-sm font-bold">
+                        A
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm font-semibold text-green-400">裁判</span>
+                        </div>
+                        <div class="text-gray-200 whitespace-pre-wrap">{{ clar.answer }}</div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="ml-11 mt-2 text-sm text-gray-500 italic">等待裁判回复...</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center text-gray-500">
+            <p class="text-lg mb-2">暂无问答记录</p>
+            <p class="text-sm text-gray-600">如对题目有疑问，请在上方表单中提交问题</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

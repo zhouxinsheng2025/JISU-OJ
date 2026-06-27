@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}问答管理 - 澄清系统{% endblock %}
+{% block nav %}
+<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
+<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
+<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
+<a href="/jury/clarifications" class="text-blue-400 font-semibold">问答</a>
+<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">问答管理</h1>
+        <div class="flex gap-2">
+            <form method="GET" action="/jury/clarifications">
+                <select name="contest_id" onchange="this.form.submit()"
+                        class="bg-gray-800 border border-gray-600 text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                    <option value="">全部比赛</option>
+                    {% for c in contests %}
+                    <option value="{{ c.id }}" {% if selected_contest_id == c.id %}selected{% endif %}>
+                        {{ c.title }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    {% if clarifications %}
+    <div class="space-y-4">
+        {% for clar in clarifications %}
+        {% set sender = users_map.get(clar.sender_id) %}
+        <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-700 bg-gray-850">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-semibold text-blue-400">{{ sender.teamname or sender.username if sender else '未知' }}</span>
+                        <span class="text-xs text-gray-500">{{ clar.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        {% if clar.answer %}
+                        <span class="text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded">已回复</span>
+                        {% else %}
+                        <span class="text-xs bg-yellow-900 text-yellow-300 px-2 py-0.5 rounded">待回复</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-xs text-gray-500">#{{ clar.id }}</div>
+                </div>
+            </div>
+            <div class="px-6 py-4">
+                <div class="mb-2">
+                    <span class="text-xs text-gray-500 mr-2 font-bold">Q:</span>
+                    <span class="text-white whitespace-pre-wrap">{{ clar.question }}</span>
+                </div>
+
+                {% if clar.answer %}
+                <div class="mb-2">
+                    <span class="text-xs text-gray-500 mr-2 font-bold">A:</span>
+                    <span class="text-green-300 whitespace-pre-wrap">{{ clar.answer }}</span>
+                </div>
+                <div class="text-xs text-gray-500">
+                    {% set replier = users_map.get(clar.recipient_id) %}
+                    回复人: {{ replier.teamname or replier.username if replier else '裁判' }}
+                </div>
+                {% else %}
+                <details class="mt-3">
+                    <summary class="text-blue-400 hover:text-blue-300 cursor-pointer text-sm font-medium">回复此问题</summary>
+                    <form method="POST" action="/jury/clarifications/{{ clar.id }}/reply" class="mt-3 space-y-3">
+                        <textarea name="answer" rows="3" required
+                                  class="w-full bg-gray-900 border border-gray-600 rounded px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                                  placeholder="输入回复内容..."></textarea>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                                <input type="checkbox" name="make_public" value="1"
+                                       class="bg-gray-700 border-gray-500 rounded">
+                                回复所有人可见（公开）
+                            </label>
+                            <button type="submit"
+                                    class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded text-sm font-semibold transition">
+                                提交回复
+                            </button>
+                        </div>
+                    </form>
+                </details>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-800 rounded-lg p-12 border border-gray-700 text-center">
+        <p class="text-gray-500 text-lg mb-2">暂无问答记录</p>
+        <p class="text-gray-600 text-sm">等待参赛队伍提交问题</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -310,3 +310,72 @@ async def submission_detail(
             "runs": runs,
         },
     )
+
+
+# ── 澄清系统 ──
+
+@router.get("/clarifications")
+async def team_clarifications(
+    request: Request,
+    user: User = Depends(require_role("team")),
+    db: AsyncSession = Depends(get_db),
+):
+    from datetime import datetime
+    from app.models import Clarification
+    from sqlalchemy.orm import joinedload
+
+    now = datetime.utcnow()
+    result = await db.execute(
+        select(Contest).where(
+            Contest.enabled == True,
+            Contest.start_time <= now,
+            Contest.end_time >= now,
+        ).limit(1)
+    )
+    contest = result.scalar_one_or_none()
+
+    clar_list = []
+    if contest:
+        clar_result = await db.execute(
+            select(Clarification)
+            .options(joinedload(Clarification.sender))
+            .where(
+                Clarification.contest_id == contest.id,
+                ((Clarification.sender_id == user.id) | (Clarification.recipient_id == None))
+            )
+            .order_by(Clarification.created_at.desc())
+        )
+        clar_list = list(clar_result.unique().scalars().all())
+
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/clarifications.html",
+        {"request": request, "user": user, "contest": contest, "clarifications": clar_list},
+    )
+
+
+@router.post("/clarifications/new")
+async def team_ask(
+    request: Request,
+    question: str = Form(...),
+    user: User = Depends(require_role("team")),
+    db: AsyncSession = Depends(get_db),
+):
+    from datetime import datetime
+    from app.models import Clarification
+
+    now = datetime.utcnow()
+    result = await db.execute(
+        select(Contest).where(
+            Contest.enabled == True,
+            Contest.start_time <= now,
+            Contest.end_time >= now,
+        ).limit(1)
+    )
+    contest = result.scalar_one_or_none()
+    if contest is None:
+        return RedirectResponse(url="/team/clarifications", status_code=303)
+
+    clar = Clarification(contest_id=contest.id, sender_id=user.id, question=question)
+    db.add(clar)
+    await db.commit()
+    return RedirectResponse(url="/team/clarifications", status_code=303)
