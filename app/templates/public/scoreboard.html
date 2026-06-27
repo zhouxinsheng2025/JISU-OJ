@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>{% if contest %}{{ contest.title }} - {% endif %}计分板 | 裁判系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-900 text-gray-100">
+    <main class="max-w-6xl mx-auto p-6">
+        {% if contest %}
+        <div class="mb-6 text-center">
+            <h1 class="text-2xl font-bold">{{ contest.title }} - 计分板</h1>
+            <p class="text-gray-400 text-sm mt-1">
+                页面每 30 秒自动刷新
+                {% if freeze %}
+                <span class="text-yellow-400 ml-2">&#x26A0; 已封榜</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+            <table class="w-full text-left">
+                <thead class="bg-gray-700 text-gray-300">
+                    <tr>
+                        <th class="px-3 py-3 w-12 text-center">#</th>
+                        <th class="px-3 py-3">队伍</th>
+                        {% for problem in problems %}
+                        <th class="px-2 py-3 text-center font-mono text-sm">{{ problem.title|truncate(10, True, '..') }}</th>
+                        {% endfor %}
+                        <th class="px-3 py-3 text-center">解题数</th>
+                        <th class="px-3 py-3 text-center">罚时/总分</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700 font-mono text-sm">
+                    {% for item in board %}
+                    <tr class="hover:bg-gray-750 transition">
+                        <td class="px-3 py-2 text-center text-gray-400">{{ loop.index }}</td>
+                        <td class="px-3 py-2 font-semibold">{{ item.teamname }}</td>
+                        {% for problem in problems %}
+                        {% set cache = item.problems.get(problem.id) %}
+                        <td class="px-2 py-2 text-center">
+                            {% if cache and cache.is_correct %}
+                            <span class="text-green-400 font-bold" title="AC ({{ cache.submissions }} 次提交, {{ cache.total_time }} 罚时)">
+                                +{% if cache.submissions > 1 %}{{ cache.submissions - 1 }}{% endif %}
+                            </span>
+                            {% elif cache and not cache.is_correct %}
+                            <span class="text-red-400" title="WA ({{ cache.submissions }} 次提交)">-{{ cache.submissions }}</span>
+                            {% else %}
+                            <span class="text-gray-600">.</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="px-3 py-2 text-center font-bold text-blue-300">{{ item.solved }}</td>
+                        <td class="px-3 py-2 text-center text-gray-300">
+                            {% if contest.score_mode == "ioi" %}
+                            {{ item.total_score }}
+                            {% else %}
+                            {{ item.total_time }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="{{ 3 + problems|length }}" class="px-4 py-12 text-center text-gray-500">
+                            <div class="text-4xl mb-2">/</div>
+                            <div>暂无排名数据</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <div class="text-6xl mb-4 text-gray-600">/</div>
+            <h1 class="text-2xl font-bold text-gray-400 mb-2">暂无进行中的比赛</h1>
+            <p class="text-gray-500">请等待比赛开始或联系管理员</p>
+        </div>
+        {% endif %}
+    </main>
+</body>
+</html>

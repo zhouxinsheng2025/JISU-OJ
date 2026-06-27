@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}提交 #{{ submission.id }} 详情 - 裁判{% endblock %}
+{% block nav %}
+<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
+<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
+<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
+<a href="/jury/submissions" class="text-blue-400 font-semibold">提交</a>
+<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
+<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-4">
+        <a href="/jury/submissions" class="text-gray-400 hover:text-white transition text-sm">&larr; 返回提交列表</a>
+        <form method="post" action="/jury/submissions/{{ submission.id }}/rejudge" onsubmit="return confirm('确定要重判此提交吗？将删除现有判题记录。');">
+            <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white text-sm px-4 py-2 rounded transition">
+                &#x21bb; 重判
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+        <h1 class="text-2xl font-bold mb-4">提交 #{{ submission.id }} 详情</h1>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+                <span class="text-gray-400">题目：</span>
+                <span class="text-gray-200">{{ submission.problem.title if submission.problem else '未知' }}</span>
+            </div>
+            <div>
+                <span class="text-gray-400">语言：</span>
+                <span class="font-mono text-gray-200">{{ submission.language }}</span>
+            </div>
+            <div>
+                <span class="text-gray-400">队伍：</span>
+                <span class="text-gray-200">{{ submission.team.teamname if submission.team else '未知' }}</span>
+            </div>
+            <div>
+                <span class="text-gray-400">提交时间：</span>
+                <span class="text-gray-200">{{ submission.submit_time.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+            </div>
+            <div>
+                <span class="text-gray-400">状态：</span>
+                {% if submission.state == "queued" %}
+                <span class="text-yellow-400 font-medium">排队中</span>
+                {% elif submission.state == "judging" %}
+                <span class="text-blue-400 font-medium">判题中</span>
+                {% elif submission.state == "done" %}
+                <span class="text-green-400 font-medium">已完成</span>
+                {% else %}
+                <span class="text-gray-400">{{ submission.state }}</span>
+                {% endif %}
+            </div>
+            {% if judging %}
+            <div>
+                <span class="text-gray-400">结果：</span>
+                {% if judging.result %}
+                    {% if judging.result == "AC" %}
+                    <span class="text-green-400 font-bold font-mono">AC</span>
+                    {% elif judging.result == "WA" %}
+                    <span class="text-red-400 font-bold font-mono">WA</span>
+                    {% elif judging.result == "TLE" %}
+                    <span class="text-yellow-400 font-bold font-mono">TLE</span>
+                    {% elif judging.result == "MLE" %}
+                    <span class="text-yellow-400 font-bold font-mono">MLE</span>
+                    {% elif judging.result == "RTE" %}
+                    <span class="text-orange-400 font-bold font-mono">RTE</span>
+                    {% elif judging.result == "CE" %}
+                    <span class="text-purple-400 font-bold font-mono">CE</span>
+                    {% elif judging.result == "OLE" %}
+                    <span class="text-pink-400 font-bold font-mono">OLE</span>
+                    {% elif judging.result == "PE" %}
+                    <span class="text-indigo-400 font-bold font-mono">PE</span>
+                    {% else %}
+                    <span class="text-gray-400">{{ judging.result }}</span>
+                    {% endif %}
+                {% else %}
+                <span class="text-gray-500">-</span>
+                {% endif %}
+            </div>
+            <div>
+                <span class="text-gray-400">得分：</span>
+                <span class="font-mono text-gray-200">{{ judging.score if judging.score is not none else '-' }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 源代码 -->
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+        <h2 class="text-lg font-semibold text-blue-400 mb-3">源代码</h2>
+        <pre class="bg-gray-900 rounded p-4 text-sm text-green-300 font-mono overflow-x-auto border border-gray-700 max-h-96 overflow-y-auto"><code>{{ submission.source_code }}</code></pre>
+    </div>
+
+    <!-- 测试点详情 -->
+    {% if runs %}
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 class="text-lg font-semibold text-yellow-400 mb-3">测试点详情</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-900 text-gray-400 text-left">
+                        <th class="px-4 py-2 font-medium">#</th>
+                        <th class="px-4 py-2 font-medium">测试点</th>
+                        <th class="px-4 py-2 font-medium">结果</th>
+                        <th class="px-4 py-2 font-medium">运行时间</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for run in runs %}
+                    <tr class="hover:bg-gray-750 transition">
+                        <td class="px-4 py-2 text-gray-400 font-mono">{{ loop.index }}</td>
+                        <td class="px-4 py-2 text-gray-300">
+                            {% if run.testcase %}
+                            {{ run.testcase.id }}
+                            {% else %}
+                            测试点 #{{ run.testcase_id }}
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2">
+                            {% if run.result %}
+                                {% if run.result == "AC" %}
+                                <span class="text-green-400 font-bold font-mono">AC</span>
+                                {% elif run.result == "WA" %}
+                                <span class="text-red-400 font-bold font-mono">WA</span>
+                                {% elif run.result == "TLE" %}
+                                <span class="text-yellow-400 font-bold font-mono">TLE</span>
+                                {% elif run.result == "MLE" %}
+                                <span class="text-yellow-400 font-bold font-mono">MLE</span>
+                                {% elif run.result == "RTE" %}
+                                <span class="text-orange-400 font-bold font-mono">RTE</span>
+                                {% elif run.result == "CE" %}
+                                <span class="text-purple-400 font-bold font-mono">CE</span>
+                                {% elif run.result == "OLE" %}
+                                <span class="text-pink-400 font-bold font-mono">OLE</span>
+                                {% elif run.result == "PE" %}
+                                <span class="text-indigo-400 font-bold font-mono">PE</span>
+                                {% else %}
+                                <span class="text-gray-400">{{ run.result }}</span>
+                                {% endif %}
+                            {% else %}
+                            <span class="text-gray-500">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2 font-mono text-gray-300">{{ run.runtime }}s</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% elif judging and judging.result == "CE" %}
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 class="text-lg font-semibold text-purple-400 mb-3">编译错误</h2>
+        {% if runs %}
+        {% set ce_run = runs[0] %}
+        <pre class="bg-gray-900 rounded p-4 text-sm text-red-300 font-mono overflow-x-auto border border-gray-700 max-h-64 overflow-y-auto"><code>{{ ce_run.output }}</code></pre>
+        {% else %}
+        <p class="text-gray-400 text-sm">编译错误，无测试点执行结果。</p>
+        {% endif %}
+    </div>
+    {% elif submission.state == "done" and judging and runs|length == 0 %}
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <p class="text-gray-500 text-sm">判题已完成但暂无测试点详情。</p>
+    </div>
+    {% endif %}
+
+    {% if submission.state == "queued" or submission.state == "judging" %}
+    <script>
+        setTimeout(function() {
+            location.reload();
+        }, 3000);
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

@@ -371,7 +371,8 @@ async def add_testcase(
 async def delete_testcase(problem_id: int, tc_id: int, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
     from sqlalchemy import select
     from app.models import TestCase
-    tc = result.scalar_one_or_none()
+    tc_result = await db.execute(select(TestCase).where(TestCase.id == tc_id))
+    tc = tc_result.scalar_one_or_none()
     if tc:
         await db.delete(tc)
         await db.commit()
@@ -430,6 +431,114 @@ async def jury_clarifications(
             "contests": contests,
             "selected_contest_id": contest_id,
         },
+    )
+
+
+# ── 提交管理 ──
+
+@router.get("/submissions")
+async def jury_submissions(
+    request: Request,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models import Submission, Judging
+
+    result = await db.execute(
+        select(Submission).order_by(Submission.submit_time.desc()).limit(100)
+    )
+    submissions = list(result.scalars().all())
+
+    # 加载判题结果和关联信息
+    sub_data = []
+    for sub in submissions:
+        j_result = await db.execute(
+            select(Judging)
+            .where(Judging.submission_id == sub.id)
+            .order_by(Judging.id.desc())
+        )
+        jud = j_result.scalar_one_or_none()
+        # 确保 team 和 problem 已加载
+        await db.refresh(sub, ["team", "problem"])
+        sub_data.append({"submission": sub, "judging": jud})
+
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/submissions.html",
+        {"request": request, "user": user, "submission_data": sub_data},
+    )
+
+
+@router.get("/submissions/{submission_id}")
+async def jury_submission_detail(
+    submission_id: int,
+    request: Request,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models import Submission, Judging, JudgeRun
+
+    result = await db.execute(select(Submission).where(Submission.id == submission_id))
+    sub = result.scalar_one_or_none()
+    if sub is None:
+        return RedirectResponse(url="/jury/submissions", status_code=303)
+
+    # 加载关联数据
+    await db.refresh(sub, ["team", "problem"])
+
+    # 加载判题和运行详情
+    j_result = await db.execute(
+        select(Judging)
+        .where(Judging.submission_id == submission_id)
+        .order_by(Judging.id.desc())
+    )
+    judging = j_result.scalar_one_or_none()
+
+    runs = []
+    if judging:
+        runs_result = await db.execute(
+            select(JudgeRun).where(JudgeRun.judging_id == judging.id)
+        )
+        runs = list(runs_result.scalars().all())
+
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/submission_detail.html",
+        {
+            "request": request,
+            "user": user,
+            "submission": sub,
+            "judging": judging,
+            "runs": runs,
+        },
+    )
+
+
+@router.post("/submissions/{submission_id}/rejudge")
+async def rejudge_submission(
+    submission_id: int,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models import Submission, SubmissionState, Judging, JudgeRun
+
+    result = await db.execute(select(Submission).where(Submission.id == submission_id))
+    sub = result.scalar_one_or_none()
+    if sub:
+        # 收集所有关联的 judgeruns 并删除
+        j_result = await db.execute(
+            select(Judging).where(Judging.submission_id == submission_id)
+        )
+        judgings_list = j_result.scalars().all()
+        for judging in judgings_list:
+            runs_result = await db.execute(
+                select(JudgeRun).where(JudgeRun.judging_id == judging.id)
+            )
+            for run in runs_result.scalars().all():
+                await db.delete(run)
+            await db.delete(judging)
+        sub.state = SubmissionState.QUEUED
+        await db.commit()
+    return RedirectResponse(
+        url=f"/jury/submissions/{submission_id}", status_code=303
     )
 
 
