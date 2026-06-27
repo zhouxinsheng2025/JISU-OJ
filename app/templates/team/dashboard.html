@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}比赛面板{% endblock %}
+{% block nav %}
+<a href="/team/" class="text-blue-400 font-semibold">仪表盘</a>
+<a href="/team/problems" class="hover:text-blue-400">题目</a>
+{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">比赛面板</h1>
+
+    {% if error %}
+    <div class="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-4">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    {% if contest %}
+    <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
+        <div class="text-center mb-6">
+            <h2 class="text-3xl font-bold text-green-400 mb-2 font-mono">{{ contest.title }}</h2>
+            <p class="text-gray-400 text-sm">当前进行中的比赛</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-gray-900 rounded p-4 border border-gray-700">
+                <div class="text-gray-400 text-sm mb-1">开始时间</div>
+                <div class="font-mono text-green-300">{{ contest.start_time.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+            </div>
+            <div class="bg-gray-900 rounded p-4 border border-gray-700">
+                <div class="text-gray-400 text-sm mb-1">结束时间</div>
+                <div class="font-mono text-red-300">{{ contest.end_time.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+            </div>
+        </div>
+
+        <div class="bg-gray-900 rounded p-6 border border-gray-700 text-center">
+            <div class="text-gray-400 text-sm mb-2">距离比赛结束</div>
+            <div id="countdown" class="text-4xl font-mono font-bold text-yellow-400"
+                 data-end="{{ contest.end_time.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                计算中...
+            </div>
+        </div>
+    </div>
+
+    <div class="flex gap-4 justify-center">
+        <a href="/team/problems"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition inline-block">
+            &gt; 查看题目列表
+        </a>
+    </div>
+    {% else %}
+    <div class="bg-gray-800 rounded-lg p-12 border border-gray-700 text-center">
+        <div class="text-6xl mb-4 text-gray-600 font-mono">---</div>
+        <h2 class="text-xl font-semibold text-gray-400 mb-2">当前没有进行中的比赛</h2>
+        <p class="text-gray-500 text-sm">请等待裁判开启比赛</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+(function() {
+    var el = document.getElementById('countdown');
+    if (!el) return;
+    var endStr = el.getAttribute('data-end');
+    if (!endStr) return;
+    var end = new Date(endStr + 'Z').getTime();
+
+    function tick() {
+        var now = new Date().getTime();
+        var diff = end - now;
+        if (diff <= 0) {
+            el.textContent = '00:00:00';
+            return;
+        }
+        var h = Math.floor(diff / 3600000);
+        var m = Math.floor((diff % 3600000) / 60000);
+        var s = Math.floor((diff % 60000) / 1000);
+        el.textContent =
+            String(h).padStart(2, '0') + ':' +
+            String(m).padStart(2, '0') + ':' +
+            String(s).padStart(2, '0');
+    }
+    tick();
+    setInterval(tick, 1000);
+})();
+</script>
+{% endblock %}

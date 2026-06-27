@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}题目列表{% endblock %}
+{% block nav %}
+<a href="/team/" class="hover:text-blue-400">仪表盘</a>
+<a href="/team/problems" class="text-blue-400 font-semibold">题目</a>
+{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold mb-2">{{ contest.title }} - 题目列表</h1>
+    <p class="text-gray-400 text-sm mb-6">点击题目查看详情和提交代码</p>
+
+    <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+        <table class="w-full text-left">
+            <thead class="bg-gray-700 text-gray-300">
+                <tr>
+                    <th class="px-4 py-3 w-16">#</th>
+                    <th class="px-4 py-3">题目名称</th>
+                    <th class="px-4 py-3 text-center w-32">状态</th>
+                    <th class="px-4 py-3 text-right w-28">时间限制</th>
+                    <th class="px-4 py-3 text-right w-28">内存限制</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-700 font-mono text-sm">
+                {% for problem in problems %}
+                {% set status = status_map.get(problem.id) %}
+                <tr class="hover:bg-gray-750 transition">
+                    <td class="px-4 py-3 text-gray-400">{{ problem.order or loop.index }}</td>
+                    <td class="px-4 py-3">
+                        <a href="/team/problems/{{ problem.id }}" class="text-blue-400 hover:text-blue-300 hover:underline">
+                            {{ problem.title }}
+                        </a>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        {% if status == "solved" %}
+                        <span class="text-green-400 font-bold">AC</span>
+                        {% elif status == "attempted" %}
+                        <span class="text-yellow-400">尝试中</span>
+                        {% else %}
+                        <span class="text-gray-600">--</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right text-gray-300">{{ problem.time_limit }}s</td>
+                    <td class="px-4 py-3 text-right text-gray-300">{{ problem.memory_limit }} MB</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-4 py-12 text-center text-gray-500">
+                        <div class="text-4xl mb-2">/</div>
+                        <div>暂无题目</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4">
+        <a href="/team/" class="text-gray-400 hover:text-white transition">&larr; 返回仪表盘</a>
+    </div>
+</div>
+{% endblock %}
