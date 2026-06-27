@@ -56,6 +56,11 @@ async def _judge_submission(submission_id: int):
         problem_result = await db.execute(select(Problem).where(Problem.id == submission.problem_id))
         problem = problem_result.scalar_one_or_none()
 
+        if problem is None:
+            submission.state = SubmissionState.DONE
+            await db.commit()
+            return
+
         tc_result = await db.execute(
             select(TestCase).where(TestCase.problem_id == submission.problem_id).order_by(TestCase.order)
         )
@@ -89,7 +94,7 @@ async def _judge_submission(submission_id: int):
                 submission.state = SubmissionState.DONE
                 await db.commit()
                 # 写入编译错误到 judgerun（便于前端展示）
-                run = JudgeRun(judging_id=judging.id, testcase_id=0, result=Verdict.CE, output=compile_output)
+                run = JudgeRun(judging_id=judging.id, testcase_id=None, result=Verdict.CE, output=compile_output)
                 db.add(run)
                 await db.commit()
                 return
@@ -130,13 +135,13 @@ async def _judge_submission(submission_id: int):
             await db.commit()
 
             # 更新计分板缓存
-            await _update_scoreboard(db, submission, final_verdict, final_score)
+            await _update_scoreboard(db, submission, final_verdict, final_score, contest)
 
         except Exception as e:
             judging.result = Verdict.RTE
             judging.ended = datetime.utcnow()
             submission.state = SubmissionState.DONE
-            run = JudgeRun(judging_id=judging.id, testcase_id=0, result=Verdict.RTE, output=str(e))
+            run = JudgeRun(judging_id=judging.id, testcase_id=None, result=Verdict.RTE, output=str(e))
             db.add(run)
             await db.commit()
 
@@ -144,7 +149,7 @@ async def _judge_submission(submission_id: int):
             shutil.rmtree(work_dir, ignore_errors=True)
 
 
-async def _update_scoreboard(db: AsyncSession, submission: Submission, verdict: str, score: float):
+async def _update_scoreboard(db: AsyncSession, submission: Submission, verdict: str, score: float, contest: Contest):
     """更新计分板缓存"""
     result = await db.execute(
         select(ScoreboardCache).where(
@@ -166,14 +171,15 @@ async def _update_scoreboard(db: AsyncSession, submission: Submission, verdict: 
     entry.submissions += 1
 
     if verdict == Verdict.AC.value:
+        if entry.is_correct:
+            # Already AC — don't recompute penalty for subsequent submissions
+            await db.commit()
+            return
         entry.is_correct = True
         entry.score = max(entry.score, score)
         # 计算罚时：AC前的未通过提交*20 + 比赛开始到此次提交的分钟数
-        contest_result = await db.execute(select(Contest).where(Contest.id == submission.contest_id))
-        contest = contest_result.scalar_one_or_none()
-        if contest:
-            elapsed = int((submission.submit_time - contest.start_time).total_seconds() / 60)
-            entry.total_time = elapsed + (entry.submissions - 1) * 20
+        elapsed = int((submission.submit_time - contest.start_time).total_seconds() / 60)
+        entry.total_time = elapsed + (entry.submissions - 1) * 20
     else:
         entry.score = max(entry.score, score)
 

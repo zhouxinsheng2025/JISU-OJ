@@ -40,7 +40,30 @@
       "Bash(taskkill //F //IM python.exe)",
       "Bash(python -c \"import sys; html=sys.stdin.read\\(\\); print\\('Dashboard:', '裁判后台' in html, 'len:', len\\(html\\)\\)\")",
       "Bash(python -c \"import sys; html=sys.stdin.read\\(\\); print\\('Contests:', '比赛管理' in html, '暂无比赛' in html, 'len:', len\\(html\\)\\)\")",
-      "Bash(python -c \"import sys; html=sys.stdin.read\\(\\); print\\('New Form:', '新建比赛' in html, 'len:', len\\(html\\)\\)\")"
+      "Bash(python -c \"import sys; html=sys.stdin.read\\(\\); print\\('New Form:', '新建比赛' in html, 'len:', len\\(html\\)\\)\")",
+      "Bash(wait)",
+      "Bash(ls -la *.db data/*.db)",
+      "Bash(ls -la instance/)",
+      "Bash(rm -f /tmp/ca.txt)",
+      "Bash(rm -f /tmp/ct99.txt)",
+      "Bash(rm -f /tmp/ctx.txt)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8000)",
+      "Bash(taskkill /F /PID 25384 34008 4556 32448 24268 1828 30844 32632 33560 4684 27016 32468 26900)",
+      "Bash(taskkill /F /IM python.exe)",
+      "Bash(taskkill /F /PID 24268 34008 26900 25384 4556 1828 30844 32632 33560 32468 27016 4684 32448)",
+      "Bash(cmd.exe *)",
+      "Bash(wmic process *)",
+      "Bash(rm -f /tmp/ct.txt)",
+      "Bash(grep -o 'HelloWorld|题目列表|--|#\" | head -5 *)",
+      "Bash(提交功能即将上线)",
+      "Bash(题目描述)",
+      "Bash('样例 | head -5 *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app/judge/engine.py'\\).read\\(\\)\\); print\\('engine.py: syntax OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app/main.py'\\).read\\(\\)\\); print\\('main.py: syntax OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app/judge/engine.py', encoding='utf-8'\\).read\\(\\)\\); print\\('engine.py: syntax OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app/main.py', encoding='utf-8'\\).read\\(\\)\\); print\\('main.py: syntax OK'\\)\")",
+      "Bash(python -m py_compile app/judge/engine.py)"
     ]
   }
 }
