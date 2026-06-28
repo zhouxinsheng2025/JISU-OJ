@@ -38,6 +38,7 @@ class ContestCreate(BaseModel):
     start_time: datetime
     end_time: datetime
     score_mode: str = "icpc"
+    ctype: str = "contest"
     freeze_time: Optional[datetime] = None
 
 
@@ -47,6 +48,7 @@ class ContestOut(BaseModel):
     start_time: datetime
     end_time: datetime
     score_mode: str
+    ctype: str
     freeze_time: Optional[datetime] = None
     enabled: bool
 
@@ -54,20 +56,24 @@ class ContestOut(BaseModel):
         from_attributes = True
 
 
-# ── Problem ──
+# ── Problem (题库) ──
 class ProblemCreate(BaseModel):
+    pid: str = ""                       # P1001，留空自动生成
     title: str
     description: str = ""
+    difficulty: str = "easy"
+    tags: str = ""
     time_limit: float = 1.0
     memory_limit: int = 256
-    order: int = 0
 
 
 class ProblemOut(BaseModel):
     id: int
-    contest_id: int
+    pid: str
     title: str
     description: str
+    difficulty: str
+    tags: str
     time_limit: float
     memory_limit: int
     order: int

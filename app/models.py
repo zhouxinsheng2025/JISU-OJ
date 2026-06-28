@@ -18,6 +18,12 @@ class ScoreMode(str, enum.Enum):
     IOI = "ioi"
 
 
+class ContestType(str, enum.Enum):
+    CONTEST = "contest"      # 正式比赛（限时）
+    PRACTICE = "practice"    # 开放练习（不限时）
+    HOMEWORK = "homework"    # 作业（限时但灵活）
+
+
 class SubmissionState(str, enum.Enum):
     QUEUED = "queued"
     JUDGING = "judging"
@@ -35,6 +41,12 @@ class Verdict(str, enum.Enum):
     PE = "PE"
 
 
+class Difficulty(str, enum.Enum):
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"
+
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -47,6 +59,7 @@ class User(Base):
     submissions = relationship("Submission", back_populates="team")
     clarifications_sent = relationship("Clarification", foreign_keys="Clarification.sender_id", back_populates="sender")
     clarifications_rcvd = relationship("Clarification", foreign_keys="Clarification.recipient_id", back_populates="recipient")
+    progress = relationship("UserProgress", back_populates="user")
 
 
 class Contest(Base):
@@ -56,27 +69,44 @@ class Contest(Base):
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
     score_mode = Column(SAEnum(ScoreMode), nullable=False, default=ScoreMode.ICPC)
-    freeze_time = Column(DateTime, nullable=True)  # 封榜时间，NULL 表示不封榜
+    ctype = Column(SAEnum(ContestType), nullable=False, default=ContestType.CONTEST)
+    freeze_time = Column(DateTime, nullable=True)
     enabled = Column(Boolean, default=True, nullable=False)
 
-    problems = relationship("Problem", back_populates="contest")
+    problems = relationship("ContestProblem", back_populates="contest")
     submissions = relationship("Submission", back_populates="contest")
     clarifications = relationship("Clarification", back_populates="contest")
 
 
 class Problem(Base):
+    """题库题目 — 独立于比赛存在"""
     __tablename__ = "problems"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    contest_id = Column(Integer, ForeignKey("contests.id"), nullable=False)
+    pid = Column(String(16), unique=True, nullable=False, index=True)   # P1001
     title = Column(String(128), nullable=False)
     description = Column(Text, default="")
-    time_limit = Column(Float, default=1.0)      # 秒
-    memory_limit = Column(Integer, default=256)   # MB
+    difficulty = Column(SAEnum(Difficulty), default=Difficulty.EASY)
+    tags = Column(String(256), default="")          # 逗号分隔: "DP,图论,贪心"
+    time_limit = Column(Float, default=1.0)
+    memory_limit = Column(Integer, default=256)
     order = Column(Integer, default=0)
 
-    contest = relationship("Contest", back_populates="problems")
     testcases = relationship("TestCase", back_populates="problem")
     submissions = relationship("Submission", back_populates="problem")
+    contest_links = relationship("ContestProblem", back_populates="problem")
+    progress = relationship("UserProgress", back_populates="problem")
+
+
+class ContestProblem(Base):
+    """比赛与题目的多对多关联（含比赛内排序）"""
+    __tablename__ = "contest_problems"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    contest_id = Column(Integer, ForeignKey("contests.id"), nullable=False)
+    problem_id = Column(Integer, ForeignKey("problems.id"), nullable=False)
+    order = Column(Integer, default=0)  # 比赛内的题目顺序
+
+    contest = relationship("Contest", back_populates="problems")
+    problem = relationship("Problem", back_populates="contest_links")
 
 
 class TestCase(Base):
@@ -156,7 +186,21 @@ class ScoreboardCache(Base):
     contest_id = Column(Integer, ForeignKey("contests.id"), nullable=False)
     team_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     problem_id = Column(Integer, ForeignKey("problems.id"), nullable=False)
-    submissions = Column(Integer, default=0)      # 总提交次数
-    total_time = Column(Integer, default=0)        # 累计罚时(分钟)
+    submissions = Column(Integer, default=0)
+    total_time = Column(Integer, default=0)
     is_correct = Column(Boolean, default=False)
-    score = Column(Float, default=0.0)             # IOI制得分
+    score = Column(Float, default=0.0)
+
+
+class UserProgress(Base):
+    """用户刷题进度追踪"""
+    __tablename__ = "user_progress"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    problem_id = Column(Integer, ForeignKey("problems.id"), nullable=False)
+    ac_count = Column(Integer, default=0)           # AC次数
+    total_submissions = Column(Integer, default=0)  # 总提交次数
+    first_ac_time = Column(DateTime, nullable=True) # 首次AC时间
+
+    user = relationship("User", back_populates="progress")
+    problem = relationship("Problem", back_populates="progress")

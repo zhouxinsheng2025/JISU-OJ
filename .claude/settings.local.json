@@ -75,7 +75,8 @@
       "Bash(powershell -Command \"Get-Process -Name python* | Stop-Process -Force\")",
       "Bash(mkdir -p runs)",
       "WebSearch",
-      "Bash(cd /tmp)"
+      "Bash(cd /tmp)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app/routers/jury.py', encoding='utf-8'\\).read\\(\\)\\); print\\('jury.py OK'\\)\")"
     ]
   }
 }
