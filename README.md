@@ -41,7 +41,7 @@ python run.py
 
 浏览器打开 **http://localhost:8000**
 
-**默认管理员：** `admin` / `admin`
+管理员账号由系统首次启动时自动创建。
 
 ### Docker 部署
 

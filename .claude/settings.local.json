@@ -76,7 +76,8 @@
       "Bash(mkdir -p runs)",
       "WebSearch",
       "Bash(cd /tmp)",
-      "Bash(python -c \"import ast; ast.parse\\(open\\('app/routers/jury.py', encoding='utf-8'\\).read\\(\\)\\); print\\('jury.py OK'\\)\")"
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app/routers/jury.py', encoding='utf-8'\\).read\\(\\)\\); print\\('jury.py OK'\\)\")",
+      "Bash(python -c \"import secrets; print\\(secrets.token_hex\\(32\\)\\)\")"
     ]
   }
 }

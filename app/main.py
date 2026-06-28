@@ -31,11 +31,11 @@ async def _seed_admin():
     from app.services.auth_service import hash_password
     async with async_session() as db:
         from sqlalchemy import select
-        result = await db.execute(select(User).where(User.username == "admin"))
+        result = await db.execute(select(User).where(User.username == "chenjingbo"))
         if result.scalar_one_or_none() is None:
             admin = User(
-                username="admin",
-                password_hash=hash_password("admin"),
+                username="chenjingbo",
+                password_hash=hash_password("880730"),
                 teamname="Administrator",
                 role=UserRole.JURY,
             )
