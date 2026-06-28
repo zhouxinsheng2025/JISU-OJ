@@ -1,47 +1,69 @@
-# JISU程序设计裁判系统
+<p align="center">
+  <img src="app/static/emblem.webp" width="80" alt="JISU OJ">
+</p>
 
-> 吉林外国语大学 · 程序设计竞赛自动判题系统  
-> 参考 [DOMjudge](https://www.domjudge.org) 架构设计，专为集训队日常训练和比赛场景打造
+<h1 align="center">JISU程序设计裁判系统</h1>
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.111+-green)](https://fastapi.tiangolo.com)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+<p align="center">
+  吉林外国语大学 · 程序设计竞赛自动判题平台<br>
+  专为 ACM 集训队日常训练和竞赛场景打造
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-0.111+-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white" alt="SQLite">
+  <img src="https://img.shields.io/badge/Tailwind-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind">
+  <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs">
+</p>
+
+<p align="center">
+  <a href="#快速开始">快速开始</a> ·
+  <a href="#功能特性">功能特性</a> ·
+  <a href="#使用指南">使用指南</a> ·
+  <a href="#项目结构">项目结构</a> ·
+  <a href="#部署">部署</a>
+</p>
 
 ---
 
-## 功能特性
+## ✨ 功能特性
 
-- ⚡ **自动判题** — 提交即判，支持 C / C++ / Java / Python
-- 📚 **题库系统** — 题目独立管理，难度分级 + 算法标签
-- 🏆 **比赛模式** — ICPC 罚时制 + IOI 分数制，实时计分板
-- 🏋 **开放练习** — 不限时刷题，自动追踪个人进度
-- 📝 **作业模式** — 限时作业，灵活宽松
-- 📦 **ZIP导入** — 测试数据批量上传，兼容 DOMjudge 格式
-- 📥 **CSV导入** — 一键导入全队学生名单
-- 🔄 **重判机制** — 修改测试数据后可重判所有提交
-- 📊 **计分板** — ICPC/IOI 双排名，支持封榜
-- 💬 **问答系统** — 选手提问 ↔ 裁判回复
-- 📱 **响应式** — 手机也能提交代码
-- 🐳 **Docker 部署** — 一行命令即可部署
+| 模块 | 功能 |
+|---|---|
+| ⚡ **自动判题** | 提交即判，支持 C / C++ / Java / Python，subprocess 隔离执行 |
+| 📚 **题库系统** | 题目独立管理，难度分级（简单/中等/困难）+ 算法标签 |
+| 🏆 **比赛模式** | ICPC 罚时制 + IOI 分数制，实时计分板，支持封榜 |
+| 🏋 **开放练习** | 不限时刷题，自动追踪个人进度（AC 数、提交数、首次通过时间） |
+| 📝 **作业模式** | 限时作业，比比赛更灵活的时间约束 |
+| 📦 **ZIP 导入** | 批量上传测试数据，兼容 DOMjudge problem format |
+| 📥 **CSV 导入** | 一键批量导入全队学生名单 |
+| 🔄 **重判机制** | 修改测试数据后可对单个提交或整题重新判题 |
+| 📊 **实时排名** | ICPC（解题数→罚时）/ IOI（总分），自动刷新 |
+| 💬 **问答系统** | 选手提交疑问 → 裁判回复，支持公开/私密 |
+| 📱 **响应式设计** | 手机、平板、桌面均可正常使用 |
+| 🐳 **Docker 部署** | 提供 Dockerfile，一行命令部署 |
 
-## 快速开始
+## 🚀 快速开始
+
+### 环境要求
+
+- Python 3.10+
+- pip
 
 ### 本地运行
 
 ```bash
-# 安装依赖
+git clone https://github.com/zhouxinsheng2025/JISU-OJ.git
+cd JISU-OJ
+
 pip install -r requirements.txt
-
-# 创建必要目录
 mkdir -p runs
-
-# 启动服务
 python run.py
 ```
 
-浏览器打开 **http://localhost:8000**
-
-管理员账号由系统首次启动时自动创建。
+浏览器打开 **http://localhost:8000**，管理员账号由系统首次启动自动创建。
 
 ### Docker 部署
 
@@ -53,213 +75,130 @@ docker run -d -p 8000:8000 jisu-oj
 ### 生产部署
 
 ```bash
-# 安装依赖
-pip install -r requirements.txt
-
-# 复制并修改配置
 cp .env.example .env
-# 编辑 .env，设置 JWT_SECRET 为随机字符串
+# 编辑 .env，设置 JWT_SECRET
 
-# 后台启动
 nohup uvicorn app.main:app --host 0.0.0.0 --port 80 > server.log 2>&1 &
 ```
 
-## 使用指南
+## 📖 使用指南
 
-### 管理员操作流程
-
-```
-1. 题库管理 (/jury/bank)
-   ├── 新建题目：标题、描述、难度(简单/中等/困难)、标签(DP,图论,贪心...)
-   ├── 上传测试数据：ZIP 文件（sample/ 样例, secret/ 隐藏）
-   └── 题目独立于比赛，可复用
-   
-2. 队伍管理 (/jury/teams)
-   ├── 单个创建（用户名、密码、队伍名）
-   ├── CSV 批量导入：username,password,teamname
-   └── 启用/禁用/删除
-   
-3. 比赛管理 (/jury/contests)
-   ├── 类型：比赛(限时) / 练习(不限时) / 作业
-   ├── 选题：从题库挑选题目加入比赛
-   └── 计分模式：ICPC / IOI
-   
-4. 监控 (/jury/submissions)
-   ├── 查看所有提交
-   ├── 判题详情（代码、每测试点耗时/结果）
-   └── 手动重判
-```
-
-### 选手使用流程
+### 管理员
 
 ```
-1. 登录 → 仪表盘
-   ├── 有比赛 → 比赛面板 + 倒计时
-   └── 无比赛 → 开放练习
-
-2. 做题
-   ├── 查看题目（描述、样例、时限）
-   ├── 选择语言 → 粘贴代码 → 提交
-   └── 实时查看判题结果
-
-3. 查看
-   ├── Status → 自己的提交记录和结果
-   ├── Rank → 实时计分板
-   └── Clarification → 向裁判提问
+1. 题库管理 → 新建题目（含测试数据 ZIP 上传）
+2. 队伍管理 → 单个创建 或 CSV 批量导入
+3. 比赛管理 → 新建比赛/练习/作业 → 从题库选题
+4. 监控提交 → 查看/重判所有提交
 ```
 
-## 支持的编程语言
+### 选手
 
-| 语言 | 编译器/解释器 | 说明 |
-|---|---|---|
-| **C** | gcc -O2 | C11 |
-| **C++** | g++ -O2 | C++17 |
-| **Java** | javac + java | 类名需为 Main |
-| **Python** | python3 | 直接解释执行 |
+```
+1. 登录 → 有比赛进入比赛面板，无比赛进入开放练习
+2. 选择题目 → 查看描述和样例 → 写代码提交
+3. 查看 Status 判题结果 → Rank 计分板排名
+```
 
-## 判题结果说明
+### 判题结果
 
-| 结果 | 缩写 | 说明 |
-|---|---|---|
-| ✅ Correct | AC | 答案正确 |
-| ❌ Wrong Answer | WA | 输出与预期不符 |
-| ⏱ Time Limit Exceeded | TLE | 超过时间限制 |
-| 💾 Memory Limit Exceeded | MLE | 超过内存限制 |
-| 💥 Runtime Error | RTE | 运行崩溃或异常退出 |
-| 📤 Output Limit Exceeded | OLE | 输出超过限制 |
-| ⚙ Compiler Error | CE | 编译失败 |
+| 结果 | 含义 |
+|---|---|
+| ✅ AC | 答案正确 |
+| ❌ WA | 输出错误 |
+| ⏱ TLE | 超时 |
+| 💾 MLE | 超内存 |
+| 💥 RTE | 运行时错误 |
+| ⚙ CE | 编译错误 |
 
-## 测试数据 ZIP 格式
-
-参照 DOMjudge 标准：
+### 测试数据格式（兼容 DOMjudge）
 
 ```
 testdata.zip
-├── sample/          ← 选手可见样例
-│   ├── 1.in
-│   └── 1.out
-└── secret/          ← 隐藏判题数据
-    ├── 1.in
-    ├── 1.out
-    ├── 2.in
-    └── 2.out
+├── sample/1.in, 1.out    ← 选手可见样例
+└── secret/1.in, 1.out    ← 隐藏判题数据
 ```
 
-系统自动配对 `.in`/`.out`（或 `.in`/`.ans`），按文件名数字排序。
-
-## CSV 队伍导入格式
+### CSV 批量导入队伍
 
 ```csv
 username,password,teamname
 zhangsan,123456,张三
 lisi,123456,李四
-wangwu,123456,王五
 ```
 
-## 计分规则
-
-### ICPC 模式（ACM 赛制）
-- 每题只有通过/未通过两种状态
-- AC 时间 = 比赛开始到首次 AC 的分钟数
-- 罚时 = 每次未通过提交罚 20 分钟
-- 排名：先比 AC 题数，再比总罚时
-
-### IOI 模式（OI 赛制）
-- 每题多个测试点，各自独立计分
-- 每题得分 = AC 测试点数 / 总测试点数 × 100
-- 排名：按总得分降序
-
-## 项目结构
+## 📁 项目结构
 
 ```
-├── run.py                     # 开发模式启动入口
-├── deploy.sh                  # 生产部署脚本
-├── Dockerfile                 # Docker 构建文件
-├── jisu-oj.service           # systemd 服务文件
-├── requirements.txt           # Python 依赖
-├── .env.example               # 配置文件模板
+JISU-OJ/
+├── run.py                    # 开发启动
+├── deploy.sh                 # 生产部署脚本
+├── Dockerfile                # Docker 构建
+├── jisu-oj.service           # systemd 配置
+├── requirements.txt
+├── .env.example
 │
 ├── app/
-│   ├── main.py                # FastAPI 应用入口 + 种子数据
-│   ├── config.py              # 配置管理（支持 .env）
-│   ├── database.py            # SQLAlchemy 异步引擎
-│   ├── models.py              # 13 张表的 ORM 模型
-│   ├── schemas.py             # Pydantic 请求/响应校验
-│   ├── dependencies.py        # 认证中间件
-│   ├── templates_helpers.py   # Jinja2 模板引擎
+│   ├── main.py               # 应用入口
+│   ├── config.py             # 配置（.env 支持）
+│   ├── database.py           # 异步 SQLAlchemy
+│   ├── models.py             # 13 张表 ORM
+│   ├── schemas.py            # Pydantic 校验
+│   ├── dependencies.py       # 认证中间件
 │   │
 │   ├── routers/
-│   │   ├── auth.py            # 登录/登出
-│   │   ├── jury.py            # 裁判端（题库/比赛/队伍/提交）
-│   │   ├── team.py            # 选手端（做题/提交/练习）
-│   │   └── public.py          # 公开计分板
+│   │   ├── auth.py           # 登录认证
+│   │   ├── jury.py           # 管理端
+│   │   ├── team.py           # 选手端
+│   │   └── public.py         # 公开计分板
 │   │
 │   ├── services/
-│   │   ├── auth_service.py    # bcrypt 哈希 + JWT 签发
-│   │   ├── contest_service.py # 比赛 CRUD + 选题
+│   │   ├── auth_service.py   # bcrypt + JWT
+│   │   ├── contest_service.py
 │   │   ├── submission_service.py
-│   │   ├── score_service.py   # 计分板计算
-│   │   └── testcase_service.py # ZIP 测试数据解析
+│   │   ├── score_service.py  # 计分算法
+│   │   └── testcase_service.py # ZIP 解析
 │   │
 │   ├── judge/
-│   │   ├── engine.py          # 判题引擎（后台轮询）
-│   │   ├── compiler.py        # 编译模块
-│   │   ├── runner.py          # 执行模块（资源限制）
-│   │   └── scorer.py          # 输出比对 + 评分
+│   │   ├── engine.py         # 判题引擎
+│   │   ├── compiler.py       # 编译
+│   │   ├── runner.py         # 执行 & 资源限制
+│   │   └── scorer.py         # 输出比对
 │   │
-│   ├── templates/             # Jinja2 模板（22个）
-│   │   ├── auth/              # 登录页
-│   │   ├── jury/              # 裁判端页面
-│   │   ├── team/              # 选手端页面
-│   │   └── public/            # 公开计分板
-│   │
-│   └── static/                # 静态资源（校徽等）
-│       └── emblem.webp
+│   ├── templates/            # Jinja2 模板
+│   └── static/               # 校徽等静态资源
 │
-├── runs/                      # 判题临时工作目录
-└── data/testcases/            # 测试数据文件存储
+├── runs/                     # 判题临时目录
+└── data/                     # 测试数据存储
 ```
 
-## 数据库模型
+## 🗄 数据库表
 
-| 表名 | 说明 |
+| 表 | 说明 |
 |---|---|
-| `users` | 用户（管理员 + 参赛队伍） |
+| `users` | 用户（管理员 + 队伍） |
+| `problems` | 题库（PID、难度、标签） |
 | `contests` | 比赛（比赛/练习/作业） |
-| `problems` | 题库（独立于比赛） |
-| `contest_problems` | 比赛-题目多对多关联 |
+| `contest_problems` | 比赛↔题目关联 |
 | `testcases` | 测试数据 |
 | `submissions` | 提交记录 |
-| `judgings` | 判题总结果 |
-| `judgeruns` | 每个测试点的运行详情 |
+| `judgings` | 判题结果 |
+| `judgeruns` | 逐测试点详情 |
 | `scoreboard` | 计分板缓存 |
-| `clarifications` | 选手↔裁判问答 |
-| `user_progress` | 个人刷题进度 |
+| `clarifications` | 问答 |
+| `user_progress` | 刷题进度 |
 
-## 环境变量
-
-复制 `.env.example` 为 `.env` 进行配置：
-
-```bash
-DATABASE_URL=sqlite+aiosqlite:///judge.db   # 数据库
-JWT_SECRET=your-random-secret-here           # JWT 密钥（务必修改）
-JWT_EXPIRE_HOURS=24                          # 登录有效期
-JUDGE_POLL_INTERVAL=1                        # 判题引擎轮询间隔(秒)
-COMPILE_TIME_LIMIT=30                        # 编译超时(秒)
-```
-
-## 技术栈
+## 🛠 技术栈
 
 | 层 | 技术 |
 |---|---|
-| Web 框架 | FastAPI |
-| 数据库 | SQLite（可迁移 PostgreSQL） |
-| ORM | SQLAlchemy 2.0 (async) |
-| 模板引擎 | Jinja2 |
-| CSS | Tailwind CSS CDN |
+| 框架 | FastAPI (async) |
+| 数据库 | SQLite / PostgreSQL |
+| ORM | SQLAlchemy 2.0 |
+| 前端 | Jinja2 + Tailwind CSS |
 | 认证 | bcrypt + JWT |
-| 判题隔离 | subprocess + psutil |
+| 判题 | subprocess + psutil |
 
-## License
+## 📄 License
 
 MIT © 吉林外国语大学
