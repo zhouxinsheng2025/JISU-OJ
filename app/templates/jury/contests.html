@@ -2,6 +2,7 @@
 {% block title %}裁判后台 - 比赛管理{% endblock %}
 {% block nav %}
 <a href="/jury/" class="hover:text-blue-400">仪表盘</a>
+<a href="/jury/bank" class="hover:text-blue-400">题库</a>
 <a href="/jury/contests" class="text-blue-400 font-semibold">比赛</a>
 <a href="/jury/teams" class="hover:text-blue-400">队伍</a>
 <a href="/jury/submissions" class="hover:text-blue-400">提交</a>
@@ -22,6 +23,7 @@
             <tr>
                 <th class="px-4 py-3">#</th>
                 <th class="px-4 py-3">标题</th>
+                <th class="px-4 py-3">类型</th>
                 <th class="px-4 py-3">开始时间</th>
                 <th class="px-4 py-3">结束时间</th>
                 <th class="px-4 py-3">计分模式</th>
@@ -34,6 +36,16 @@
             <tr class="hover:bg-gray-750">
                 <td class="px-4 py-3">{{ contest.id }}</td>
                 <td class="px-4 py-3">{{ contest.title }}</td>
+                <td class="px-4 py-3">
+                    {% set ctype_val = contest.ctype.value if contest.ctype is not string else contest.ctype %}
+                    {% if ctype_val == "practice" %}
+                    <span class="text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded text-xs">练习</span>
+                    {% elif ctype_val == "homework" %}
+                    <span class="text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded text-xs">作业</span>
+                    {% else %}
+                    <span class="text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded text-xs">比赛</span>
+                    {% endif %}
+                </td>
                 <td class="px-4 py-3">{{ contest.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
                 <td class="px-4 py-3">{{ contest.end_time.strftime('%Y-%m-%d %H:%M') }}</td>
                 <td class="px-4 py-3">{{ contest.score_mode.upper() if contest.score_mode is string else contest.score_mode.value.upper() }}</td>
@@ -46,6 +58,7 @@
                 </td>
                 <td class="px-4 py-3 flex gap-2">
                     <a href="/jury/contests/{{ contest.id }}/problems" class="text-green-400 hover:underline">题目</a>
+                    <a href="/jury/contests/{{ contest.id }}/add-problem" class="text-purple-400 hover:underline">选题</a>
                     <a href="/jury/contests/{{ contest.id }}/edit" class="text-blue-400 hover:underline">编辑</a>
                     <form method="post" action="/jury/contests/{{ contest.id }}/toggle" style="display:inline">
                         <button type="submit" class="text-yellow-400 hover:underline">
@@ -59,7 +72,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" class="px-4 py-8 text-center text-gray-500">暂无比赛</td>
+                <td colspan="8" class="px-4 py-8 text-center text-gray-500">暂无比赛</td>
             </tr>
             {% endfor %}
         </tbody>

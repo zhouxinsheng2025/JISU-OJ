@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Request, Depends, Form, Query
+from fastapi import APIRouter, Request, Depends, Form, Query, UploadFile, File
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from app.database import get_db
 from app.dependencies import require_role
-from app.models import User, Contest
+from app.models import User, Contest, Problem, ContestProblem, UserRole, Difficulty
 from app.schemas import ContestCreate
 from app.services import contest_service
 from app.services import score_service
@@ -26,7 +27,6 @@ async def jury_scoreboard(
     from datetime import datetime
 
     if contest_id is None:
-        # 默认显示第一个启用的比赛
         result = await db.execute(select(Contest).where(Contest.enabled == True).order_by(Contest.id.desc()).limit(1))
         contest = result.scalar_one_or_none()
     else:
@@ -82,6 +82,7 @@ async def create_contest_action(
     start_time: str = Form(...),
     end_time: str = Form(...),
     score_mode: str = Form("icpc"),
+    ctype: str = Form("contest"),
     freeze_time: str = Form(""),
     user: User = Depends(require_role("jury")),
     db: AsyncSession = Depends(get_db),
@@ -92,6 +93,7 @@ async def create_contest_action(
         start_time=datetime.fromisoformat(start_time),
         end_time=datetime.fromisoformat(end_time),
         score_mode=score_mode,
+        ctype=ctype,
         freeze_time=datetime.fromisoformat(freeze_time) if freeze_time else None,
     )
     await contest_service.create_contest(db, data)
@@ -118,6 +120,7 @@ async def edit_contest_action(
     start_time: str = Form(...),
     end_time: str = Form(...),
     score_mode: str = Form("icpc"),
+    ctype: str = Form("contest"),
     freeze_time: str = Form(""),
     user: User = Depends(require_role("jury")),
     db: AsyncSession = Depends(get_db),
@@ -128,6 +131,7 @@ async def edit_contest_action(
         start_time=datetime.fromisoformat(start_time),
         end_time=datetime.fromisoformat(end_time),
         score_mode=score_mode,
+        ctype=ctype,
         freeze_time=datetime.fromisoformat(freeze_time) if freeze_time else None,
     )
     await contest_service.update_contest(db, contest_id, data)
@@ -151,8 +155,6 @@ async def delete_contest_action(contest_id: int, user: User = Depends(require_ro
 # ── 队伍列表 ──
 @router.get("/teams")
 async def list_teams(request: Request, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import select
-    from app.models import UserRole
     result = await db.execute(
         select(User).where(User.role == UserRole.TEAM).order_by(User.id)
     )
@@ -182,7 +184,6 @@ async def create_team(
     db: AsyncSession = Depends(get_db),
 ):
     from app.services.auth_service import hash_password
-    from app.models import UserRole
     team = User(
         username=username,
         password_hash=hash_password(password),
@@ -194,10 +195,54 @@ async def create_team(
     return RedirectResponse(url="/jury/teams", status_code=303)
 
 
+# ── CSV批量导入队伍 ──
+@router.post("/teams/csv")
+async def import_teams_csv(
+    request: Request,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    """批量导入队伍，CSV列: username,password,teamname"""
+    from app.services.auth_service import hash_password
+    form = await request.form()
+    file: UploadFile = form.get("csvfile")
+    if file is None or not file.filename:
+        return RedirectResponse(url="/jury/teams", status_code=303)
+
+    content = (await file.read()).decode("utf-8-sig")
+    imported = 0
+    for line in content.strip().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split(",")
+        if len(parts) < 3:
+            continue
+        username = parts[0].strip()
+        password = parts[1].strip()
+        teamname = parts[2].strip()
+        if not username or not password or not teamname:
+            continue
+        # 检查是否已存在
+        existing = await db.execute(select(User).where(User.username == username))
+        if existing.scalar_one_or_none():
+            continue
+        team = User(
+            username=username,
+            password_hash=hash_password(password),
+            teamname=teamname,
+            role=UserRole.TEAM,
+        )
+        db.add(team)
+        imported += 1
+    if imported:
+        await db.commit()
+    return RedirectResponse(url="/jury/teams", status_code=303)
+
+
 # ── 编辑队伍 ──
 @router.get("/teams/{team_id}/edit")
 async def edit_team_page(team_id: int, request: Request, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import select
     result = await db.execute(select(User).where(User.id == team_id))
     team = result.scalar_one_or_none()
     if team is None:
@@ -219,7 +264,6 @@ async def edit_team(
     user: User = Depends(require_role("jury")),
     db: AsyncSession = Depends(get_db),
 ):
-    from sqlalchemy import select
     result = await db.execute(select(User).where(User.id == team_id))
     team = result.scalar_one_or_none()
     if team is None:
@@ -237,7 +281,6 @@ async def edit_team(
 # ── 删除队伍 ──
 @router.post("/teams/{team_id}/delete")
 async def delete_team(team_id: int, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import select
     result = await db.execute(select(User).where(User.id == team_id))
     team = result.scalar_one_or_none()
     if team:
@@ -246,115 +289,219 @@ async def delete_team(team_id: int, user: User = Depends(require_role("jury")), 
     return RedirectResponse(url="/jury/teams", status_code=303)
 
 
-# ── 题目列表 ──
+# ═══════════════════════════════════════════
+# 题库 (Problem Bank)
+# ═══════════════════════════════════════════
+
+@router.get("/bank")
+async def problem_bank(
+    request: Request,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+    difficulty: str = Query(None),
+    tag: str = Query(None),
+):
+    """题库列表，支持按难度和标签筛选"""
+    query = select(Problem).order_by(Problem.id.desc())
+    if difficulty:
+        query = query.where(Problem.difficulty == difficulty)
+    if tag:
+        query = query.where(Problem.tags.contains(tag))
+    result = await db.execute(query)
+    problems = list(result.scalars().all())
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/bank.html",
+        {
+            "request": request,
+            "user": user,
+            "problems": problems,
+            "filter_difficulty": difficulty or "",
+            "filter_tag": tag or "",
+            "difficulties": Difficulty,
+        },
+    )
+
+
+@router.get("/bank/new")
+async def new_bank_problem_page(request: Request, user: User = Depends(require_role("jury"))):
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/bank_form.html",
+        {"request": request, "user": user, "problem": None},
+    )
+
+
+@router.post("/bank/new")
+async def create_bank_problem(
+    request: Request,
+    title: str = Form(...),
+    description: str = Form(""),
+    difficulty: str = Form("easy"),
+    tags: str = Form(""),
+    time_limit: float = Form(1.0),
+    memory_limit: int = Form(256),
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    # 自动生成 pid
+    from datetime import datetime
+    pid = f"P{datetime.utcnow().strftime('%y%m%d%H%M%S')}"
+
+    problem = Problem(
+        pid=pid,
+        title=title,
+        description=description,
+        difficulty=difficulty,
+        tags=tags,
+        time_limit=time_limit,
+        memory_limit=memory_limit,
+    )
+    db.add(problem)
+    await db.commit()
+    return RedirectResponse(url="/jury/bank", status_code=303)
+
+
+@router.get("/bank/{problem_id}/edit")
+async def edit_bank_problem_page(
+    problem_id: int,
+    request: Request,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Problem).where(Problem.id == problem_id))
+    problem = result.scalar_one_or_none()
+    if problem is None:
+        return RedirectResponse(url="/jury/bank", status_code=303)
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/bank_form.html",
+        {"request": request, "user": user, "problem": problem},
+    )
+
+
+@router.post("/bank/{problem_id}/edit")
+async def edit_bank_problem(
+    problem_id: int,
+    request: Request,
+    title: str = Form(...),
+    description: str = Form(""),
+    difficulty: str = Form("easy"),
+    tags: str = Form(""),
+    time_limit: float = Form(1.0),
+    memory_limit: int = Form(256),
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Problem).where(Problem.id == problem_id))
+    problem = result.scalar_one_or_none()
+    if problem is None:
+        return RedirectResponse(url="/jury/bank", status_code=303)
+    problem.title = title
+    problem.description = description
+    problem.difficulty = difficulty
+    problem.tags = tags
+    problem.time_limit = time_limit
+    problem.memory_limit = memory_limit
+    await db.commit()
+    return RedirectResponse(url="/jury/bank", status_code=303)
+
+
+@router.post("/bank/{problem_id}/delete")
+async def delete_bank_problem(
+    problem_id: int,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Problem).where(Problem.id == problem_id))
+    problem = result.scalar_one_or_none()
+    if problem:
+        await db.delete(problem)
+        await db.commit()
+    return RedirectResponse(url="/jury/bank", status_code=303)
+
+
+# ═══════════════════════════════════════════
+# 比赛题目管理 (via ContestProblem)
+# ═══════════════════════════════════════════
+
 @router.get("/contests/{contest_id}/problems")
 async def list_problems(contest_id: int, request: Request, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
     contest = await contest_service.get_contest(db, contest_id)
     if contest is None:
         return RedirectResponse(url="/jury/contests", status_code=303)
-    from sqlalchemy import select
-    from app.models import Problem
-    result = await db.execute(
-        select(Problem).where(Problem.contest_id == contest_id).order_by(Problem.order)
-    )
-    problems = list(result.scalars().all())
+    problems = await contest_service.get_problems(db, contest_id)
     return templates.TemplateResponse(
         f"{TEMPLATE_DIR}/problems.html",
         {"request": request, "user": user, "contest": contest, "problems": problems},
     )
 
 
-# ── 创建题目 ──
-@router.get("/contests/{contest_id}/problems/new")
-async def new_problem_page(contest_id: int, request: Request, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
+@router.get("/contests/{contest_id}/add-problem")
+async def add_problem_to_contest_page(
+    contest_id: int,
+    request: Request,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    """从题库选题添加到比赛"""
     contest = await contest_service.get_contest(db, contest_id)
     if contest is None:
         return RedirectResponse(url="/jury/contests", status_code=303)
+
+    # 获取题库中所有题目
+    bank_result = await db.execute(select(Problem).order_by(Problem.id.desc()))
+    all_problems = list(bank_result.scalars().all())
+
+    # 获取已添加到比赛中的题目ID
+    contest_problems = await contest_service.get_problems(db, contest_id)
+    added_ids = {p.id for p in contest_problems}
+
     return templates.TemplateResponse(
-        f"{TEMPLATE_DIR}/problem_form.html",
-        {"request": request, "user": user, "contest": contest, "problem": None},
+        f"{TEMPLATE_DIR}/add_problem.html",
+        {
+            "request": request,
+            "user": user,
+            "contest": contest,
+            "all_problems": all_problems,
+            "added_ids": added_ids,
+        },
     )
 
 
-@router.post("/contests/{contest_id}/problems/new")
-async def create_problem(
+@router.post("/contests/{contest_id}/add-problem")
+async def add_problem_to_contest_action(
     contest_id: int,
     request: Request,
-    title: str = Form(...),
-    description: str = Form(""),
-    time_limit: float = Form(1.0),
-    memory_limit: int = Form(256),
+    problem_id: int = Form(...),
     order: int = Form(0),
     user: User = Depends(require_role("jury")),
     db: AsyncSession = Depends(get_db),
 ):
-    from app.models import Problem
-    problem = Problem(
-        contest_id=contest_id,
-        title=title,
-        description=description,
-        time_limit=time_limit,
-        memory_limit=memory_limit,
-        order=order,
-    )
-    db.add(problem)
-    await db.commit()
-    await db.refresh(problem)
-    return RedirectResponse(url=f"/jury/problems/{problem.id}/testcases", status_code=303)
+    await contest_service.add_problem_to_contest(db, contest_id, problem_id, order)
+    return RedirectResponse(url=f"/jury/contests/{contest_id}/add-problem", status_code=303)
 
 
-# ── 编辑题目 ──
-@router.get("/problems/{problem_id}/edit")
-async def edit_problem_page(problem_id: int, request: Request, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import select
-    from app.models import Problem
-    result = await db.execute(select(Problem).where(Problem.id == problem_id))
-    problem = result.scalar_one_or_none()
-    if problem is None:
-        return RedirectResponse(url="/jury/contests", status_code=303)
-    contest = await contest_service.get_contest(db, problem.contest_id)
-    return templates.TemplateResponse(
-        f"{TEMPLATE_DIR}/problem_form.html",
-        {"request": request, "user": user, "contest": contest, "problem": problem},
-    )
-
-
-@router.post("/problems/{problem_id}/edit")
-async def edit_problem(
-    problem_id: int,
+@router.post("/contests/{contest_id}/remove-problem")
+async def remove_problem_from_contest_action(
+    contest_id: int,
     request: Request,
-    title: str = Form(...),
-    description: str = Form(""),
-    time_limit: float = Form(1.0),
-    memory_limit: int = Form(256),
-    order: int = Form(0),
+    problem_id: int = Form(...),
     user: User = Depends(require_role("jury")),
     db: AsyncSession = Depends(get_db),
 ):
-    from sqlalchemy import select
-    from app.models import Problem
-    result = await db.execute(select(Problem).where(Problem.id == problem_id))
-    problem = result.scalar_one_or_none()
-    if problem is None:
-        return RedirectResponse(url="/jury/contests", status_code=303)
-    problem.title = title
-    problem.description = description
-    problem.time_limit = time_limit
-    problem.memory_limit = memory_limit
-    problem.order = order
-    await db.commit()
-    return RedirectResponse(url=f"/jury/contests/{problem.contest_id}/problems", status_code=303)
+    await contest_service.remove_problem_from_contest(db, contest_id, problem_id)
+    return RedirectResponse(url=f"/jury/contests/{contest_id}/add-problem", status_code=303)
 
 
-# ── 测试数据管理 ──
+# ═══════════════════════════════════════════
+# 测试数据管理 (standalone, no longer requires contest_id)
+# ═══════════════════════════════════════════
+
 @router.get("/problems/{problem_id}/testcases")
 async def manage_testcases(problem_id: int, request: Request, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import select
-    from app.models import Problem, TestCase
+    from app.models import TestCase
     result = await db.execute(select(Problem).where(Problem.id == problem_id))
     problem = result.scalar_one_or_none()
     if problem is None:
-        return RedirectResponse(url="/jury/contests", status_code=303)
+        return RedirectResponse(url="/jury/bank", status_code=303)
     tc_result = await db.execute(
         select(TestCase).where(TestCase.problem_id == problem_id).order_by(TestCase.order)
     )
@@ -387,7 +534,6 @@ async def add_testcase(
     return RedirectResponse(url=f"/jury/problems/{problem_id}/testcases", status_code=303)
 
 
-# ── ZIP批量上传测试数据 ──
 @router.post("/problems/{problem_id}/testcases/zip")
 async def upload_testdata_zip(
     problem_id: int,
@@ -395,20 +541,18 @@ async def upload_testdata_zip(
     user: User = Depends(require_role("jury")),
     db: AsyncSession = Depends(get_db),
 ):
-    from fastapi import UploadFile, File
     from app.services.testcase_service import import_testcases_from_zip
     form = await request.form()
     file: UploadFile = form.get("zipfile")
     replace = form.get("replace", "0") == "1"
     if file and file.filename and file.filename.endswith('.zip'):
         content = await file.read()
-        count = await import_testcases_from_zip(db, problem_id, content, replace=replace)
+        await import_testcases_from_zip(db, problem_id, content, replace=replace)
     return RedirectResponse(url=f"/jury/problems/{problem_id}/testcases", status_code=303)
 
 
 @router.post("/problems/{problem_id}/testcases/delete/{tc_id}")
 async def delete_testcase(problem_id: int, tc_id: int, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import select
     from app.models import TestCase
     tc_result = await db.execute(select(TestCase).where(TestCase.id == tc_id))
     tc = tc_result.scalar_one_or_none()
@@ -428,7 +572,6 @@ async def jury_clarifications(
     db: AsyncSession = Depends(get_db),
 ):
     from app.models import Clarification
-    from sqlalchemy.orm import joinedload
 
     if contest_id:
         clar_result = await db.execute(
@@ -445,7 +588,6 @@ async def jury_clarifications(
         )
     clarifications = list(clar_result.unique().scalars().all())
 
-    # 获取所有相关接收者用户
     user_ids = set()
     for c in clarifications:
         user_ids.add(c.sender_id)
@@ -456,8 +598,6 @@ async def jury_clarifications(
         user_result = await db.execute(select(User).where(User.id.in_(user_ids)))
         users_map = {u.id: u for u in user_result.scalars().all()}
 
-    # 获取比赛列表供筛选
-    from app.services import contest_service
     contests = await contest_service.get_contests(db)
 
     return templates.TemplateResponse(
@@ -488,7 +628,6 @@ async def jury_submissions(
     )
     submissions = list(result.scalars().all())
 
-    # 加载判题结果和关联信息
     sub_data = []
     for sub in submissions:
         j_result = await db.execute(
@@ -497,7 +636,6 @@ async def jury_submissions(
             .order_by(Judging.id.desc())
         )
         jud = j_result.scalar_one_or_none()
-        # 确保 team 和 problem 已加载
         await db.refresh(sub, ["team", "problem"])
         sub_data.append({"submission": sub, "judging": jud})
 
@@ -521,10 +659,8 @@ async def jury_submission_detail(
     if sub is None:
         return RedirectResponse(url="/jury/submissions", status_code=303)
 
-    # 加载关联数据
     await db.refresh(sub, ["team", "problem"])
 
-    # 加载判题和运行详情
     j_result = await db.execute(
         select(Judging)
         .where(Judging.submission_id == submission_id)
@@ -562,7 +698,6 @@ async def rejudge_submission(
     result = await db.execute(select(Submission).where(Submission.id == submission_id))
     sub = result.scalar_one_or_none()
     if sub:
-        # 收集所有关联的 judgeruns 并删除
         j_result = await db.execute(
             select(Judging).where(Judging.submission_id == submission_id)
         )

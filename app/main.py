@@ -8,6 +8,7 @@ app = FastAPI(title="JISU程序设计裁判系统")
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
+
 @app.get("/static/{filename}")
 async def static_file(filename: str):
     return FileResponse(os.path.join(STATIC_DIR, filename))
@@ -15,12 +16,12 @@ async def static_file(filename: str):
 
 @app.on_event("startup")
 async def startup():
-    # 确保必要目录存在
     os.makedirs(settings.RUNS_DIR, exist_ok=True)
     os.makedirs(settings.DATA_DIR, exist_ok=True)
     from app.database import init_db
     await init_db()
     await _seed_admin()
+    await _seed_practice_contest()
     asyncio.create_task(judge_loop())
 
 
@@ -40,6 +41,30 @@ async def _seed_admin():
             )
             db.add(admin)
             await db.commit()
+
+
+async def _seed_practice_contest():
+    """Seed the 开放练习 practice contest if it doesn't exist."""
+    from datetime import datetime
+    from app.database import async_session
+    from app.models import Contest, ContestType
+    async with async_session() as db:
+        from sqlalchemy import select
+        result = await db.execute(
+            select(Contest).where(Contest.ctype == ContestType.PRACTICE).limit(1)
+        )
+        if result.scalar_one_or_none() is None:
+            practice = Contest(
+                title="开放练习",
+                start_time=datetime(2000, 1, 1),
+                end_time=datetime(2099, 12, 31),
+                score_mode="icpc",
+                ctype=ContestType.PRACTICE,
+                enabled=True,
+            )
+            db.add(practice)
+            await db.commit()
+            print("[Seed] 开放练习比赛已创建")
 
 
 # 注册路由

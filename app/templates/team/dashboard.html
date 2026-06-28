@@ -3,6 +3,7 @@
 {% block nav %}
 <a href="/team/" class="text-blue-400 font-semibold">仪表盘</a>
 <a href="/team/problems" class="hover:text-blue-400">题目</a>
+<a href="/team/practice" class="hover:text-blue-400">练习</a>
 {% endblock %}
 {% block content %}
 <div class="max-w-3xl mx-auto">
@@ -45,6 +46,17 @@
         <a href="/team/problems"
            class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition inline-block">
             &gt; 查看题目列表
+        </a>
+    </div>
+
+    {% elif practice %}
+    <div class="bg-gray-800 rounded-lg p-12 border border-purple-700 text-center">
+        <div class="text-6xl mb-4 text-purple-400">&#9997;</div>
+        <h2 class="text-xl font-semibold text-purple-400 mb-2">练习模式</h2>
+        <p class="text-gray-400 mb-6">当前没有进行中的比赛，但你可以进入练习模式刷题</p>
+        <a href="/team/practice"
+           class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-semibold transition inline-block">
+            &gt; 进入练习
         </a>
     </div>
     {% else %}

@@ -2,6 +2,7 @@
 {% block title %}裁判后台 - {{ "编辑比赛" if contest else "新建比赛" }}{% endblock %}
 {% block nav %}
 <a href="/jury/" class="hover:text-blue-400">仪表盘</a>
+<a href="/jury/bank" class="hover:text-blue-400">题库</a>
 <a href="/jury/contests" class="text-blue-400 font-semibold">比赛</a>
 <a href="/jury/teams" class="hover:text-blue-400">队伍</a>
 <a href="/jury/submissions" class="hover:text-blue-400">提交</a>
@@ -18,6 +19,17 @@
             <input type="text" name="title" required
                    value="{{ contest.title if contest else '' }}"
                    class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-300 mb-1">类型</label>
+            {% set ctype_val = contest.ctype.value if contest and contest.ctype is not string else (contest.ctype if contest else 'contest') %}
+            <select name="ctype"
+                    class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                <option value="contest" {% if ctype_val == "contest" %}selected{% endif %}>正式比赛</option>
+                <option value="practice" {% if ctype_val == "practice" %}selected{% endif %}>开放练习</option>
+                <option value="homework" {% if ctype_val == "homework" %}selected{% endif %}>作业</option>
+            </select>
         </div>
 
         <div class="mb-4">

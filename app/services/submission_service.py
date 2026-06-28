@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from app.models import Submission, SubmissionState, Problem, Contest, Judging, JudgeRun
+from app.models import Submission, SubmissionState, Problem, Contest, Judging, JudgeRun, ContestType
 
 
 async def create_submission(
@@ -33,6 +33,23 @@ async def get_team_submissions(db: AsyncSession, team_id: int) -> list[Submissio
         select(Submission)
         .options(selectinload(Submission.problem))
         .where(Submission.team_id == team_id)
+        .order_by(Submission.submit_time.desc())
+        .limit(50)
+    )
+    return list(result.scalars().all())
+
+
+async def get_practice_submissions(db: AsyncSession, team_id: int) -> list[Submission]:
+    """获取用户在练习模式下的提交记录"""
+    result = await db.execute(
+        select(Submission)
+        .options(selectinload(Submission.problem), selectinload(Submission.contest))
+        .where(
+            Submission.team_id == team_id,
+            Submission.contest_id.in_(
+                select(Contest.id).where(Contest.ctype == ContestType.PRACTICE)
+            ),
+        )
         .order_by(Submission.submit_time.desc())
         .limit(50)
     )

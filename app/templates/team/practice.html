@@ -1,16 +1,17 @@
 {% extends "base.html" %}
-{% block title %}题目列表{% endblock %}
+{% block title %}练习模式{% endblock %}
 {% block nav %}
 <a href="/team/" class="hover:text-blue-400">仪表盘</a>
-<a href="/team/problems" class="text-blue-400 font-semibold">题目</a>
-{% if not contest or contest.ctype.value == "practice" or contest.ctype == "practice" %}
-<a href="/team/practice" class="hover:text-blue-400">练习</a>
-{% endif %}
+<a href="/team/problems" class="hover:text-blue-400">题目</a>
+<a href="/team/practice" class="text-blue-400 font-semibold">练习</a>
 {% endblock %}
 {% block content %}
 <div class="max-w-4xl mx-auto">
-    <h1 class="text-2xl font-bold mb-2">{{ contest.title }} - 题目列表</h1>
-    <p class="text-gray-400 text-sm mb-6">点击题目查看详情和提交代码</p>
+    <div class="flex items-center gap-3 mb-6">
+        <h1 class="text-2xl font-bold">练习模式</h1>
+        <span class="bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full text-sm">开放刷题</span>
+    </div>
+    <p class="text-gray-400 text-sm mb-6">自由刷题，不限时间，每道题记录你的AC次数和提交总数</p>
 
     <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
         <table class="w-full text-left">
@@ -20,14 +21,14 @@
                     <th class="px-4 py-3">题目名称</th>
                     <th class="px-4 py-3">难度</th>
                     <th class="px-4 py-3">标签</th>
-                    <th class="px-4 py-3 text-center w-32">状态</th>
+                    <th class="px-4 py-3 text-center w-32">进度</th>
                     <th class="px-4 py-3 text-right w-28">时间限制</th>
                     <th class="px-4 py-3 text-right w-28">内存限制</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-700 font-mono text-sm">
                 {% for problem in problems %}
-                {% set status = status_map.get(problem.id) %}
+                {% set prog = progress_map.get(problem.id) %}
                 <tr class="hover:bg-gray-750 transition">
                     <td class="px-4 py-3 text-gray-400">{{ problem.order or loop.index }}</td>
                     <td class="px-4 py-3">
@@ -54,12 +55,12 @@
                         {% endif %}
                     </td>
                     <td class="px-4 py-3 text-center">
-                        {% if status == "solved" %}
-                        <span class="text-green-400 font-bold">AC</span>
-                        {% elif status == "attempted" %}
-                        <span class="text-yellow-400">尝试中</span>
+                        {% if prog and prog.ac_count > 0 %}
+                        <span class="text-green-400 font-bold">AC {{ prog.ac_count }}x</span>
+                        {% elif prog and prog.total_submissions > 0 %}
+                        <span class="text-yellow-400">提交{{ prog.total_submissions }}次</span>
                         {% else %}
-                        <span class="text-gray-600">--</span>
+                        <span class="text-gray-600">未开始</span>
                         {% endif %}
                     </td>
                     <td class="px-4 py-3 text-right text-gray-300">{{ problem.time_limit }}s</td>
@@ -69,7 +70,7 @@
                 <tr>
                     <td colspan="7" class="px-4 py-12 text-center text-gray-500">
                         <div class="text-4xl mb-2">/</div>
-                        <div>暂无题目</div>
+                        <div>暂无练习题目</div>
                     </td>
                 </tr>
                 {% endfor %}

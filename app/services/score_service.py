@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models import ScoreboardCache, Contest, User, ScoreMode
+from app.models import ScoreboardCache, Contest, User, ScoreMode, Problem, ContestProblem
 
 
 async def get_scoreboard(db: AsyncSession, contest_id: int, freeze: bool = False):
@@ -54,8 +54,11 @@ async def get_scoreboard(db: AsyncSession, contest_id: int, freeze: bool = False
 
 
 async def get_contest_problems(db: AsyncSession, contest_id: int):
-    from app.models import Problem
+    """Get problems for a contest through ContestProblem join table."""
     result = await db.execute(
-        select(Problem).where(Problem.contest_id == contest_id).order_by(Problem.order)
+        select(Problem)
+        .join(ContestProblem, ContestProblem.problem_id == Problem.id)
+        .where(ContestProblem.contest_id == contest_id)
+        .order_by(ContestProblem.order)
     )
     return list(result.scalars().all())

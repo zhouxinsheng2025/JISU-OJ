@@ -2,6 +2,7 @@
 {% block title %}裁判后台 - 队伍管理{% endblock %}
 {% block nav %}
 <a href="/jury/" class="hover:text-blue-400">仪表盘</a>
+<a href="/jury/bank" class="hover:text-blue-400">题库</a>
 <a href="/jury/contests" class="hover:text-blue-400">比赛</a>
 <a href="/jury/teams" class="text-blue-400 font-semibold">队伍</a>
 <a href="/jury/submissions" class="hover:text-blue-400">提交</a>
@@ -11,10 +12,25 @@
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold">队伍管理</h1>
-    <a href="/jury/teams/new" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-        + 新建队伍
-    </a>
+    <div class="flex gap-2">
+        <a href="/jury/teams/new" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+            + 新建队伍
+        </a>
+    </div>
 </div>
+
+<!-- CSV批量导入 -->
+<details class="bg-gray-800 rounded-lg p-4 mb-6 border border-blue-500/30">
+    <summary class="cursor-pointer text-blue-400 hover:text-blue-300 font-semibold">导入CSV批量创建队伍</summary>
+    <div class="mt-4">
+        <p class="text-gray-400 text-sm mb-2">CSV格式：<code class="text-yellow-400">username,password,teamname</code>，每行一个队伍</p>
+        <form method="post" enctype="multipart/form-data" action="/jury/teams/csv" class="flex items-center gap-3">
+            <input type="file" name="csvfile" accept=".csv,.txt" required
+                   class="text-sm text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-blue-600 file:text-white file:border-0 file:text-sm hover:file:bg-blue-700 file:cursor-pointer">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm">导入</button>
+        </form>
+    </div>
+</details>
 
 <div class="bg-gray-800 rounded-lg overflow-hidden">
     <table class="w-full text-left">

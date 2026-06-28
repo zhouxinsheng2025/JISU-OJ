@@ -2,7 +2,8 @@
 {% block title %}测试数据 - {{ problem.title }}{% endblock %}
 {% block nav %}
 <a href="/jury/" class="hover:text-blue-400">仪表盘</a>
-<a href="/jury/contests" class="text-blue-400 font-semibold">比赛</a>
+<a href="/jury/bank" class="text-blue-400 font-semibold">题库</a>
+<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
 <a href="/jury/teams" class="hover:text-blue-400">队伍</a>
 <a href="/jury/submissions" class="hover:text-blue-400">提交</a>
 <a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
@@ -13,14 +14,14 @@
 <div class="flex justify-between items-center mb-6">
     <div>
         <h1 class="text-2xl font-bold">{{ problem.title }} <span class="text-gray-500 text-lg">— 测试数据</span></h1>
-        <p class="text-gray-500 text-sm mt-1">共 {{ testcases|length }} 组测试数据</p>
+        <p class="text-gray-500 text-sm mt-1">PID: {{ problem.pid }} | 共 {{ testcases|length }} 组测试数据</p>
     </div>
-    <a href="/jury/contests/{{ problem.contest_id }}/problems" class="text-gray-400 hover:text-white transition">&larr; 返回题目列表</a>
+    <a href="/jury/bank" class="text-gray-400 hover:text-white transition">&larr; 返回题库</a>
 </div>
 
 <!-- ZIP批量上传 -->
 <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-blue-500/30">
-    <h2 class="text-lg font-bold mb-2">📦 批量上传测试数据 (ZIP)</h2>
+    <h2 class="text-lg font-bold mb-2">批量上传测试数据 (ZIP)</h2>
     <p class="text-gray-400 text-sm mb-4">
         上传ZIP压缩包，系统自动识别 <code class="text-yellow-400">.in</code>/<code class="text-yellow-400">.out</code> 文件对。
         放在 <code class="text-green-400">sample/</code> 目录下为选手可见样例，<code class="text-red-400">secret/</code> 或根目录为隐藏数据。

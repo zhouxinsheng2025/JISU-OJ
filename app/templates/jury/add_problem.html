@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}裁判后台 - 题目管理{% endblock %}
+{% block title %}裁判后台 - 选题 - {{ contest.title }}{% endblock %}
 {% block nav %}
 <a href="/jury/" class="hover:text-blue-400">仪表盘</a>
 <a href="/jury/bank" class="hover:text-blue-400">题库</a>
@@ -11,32 +11,24 @@
 {% endblock %}
 {% block content %}
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">{{ contest.title }} - 题目管理</h1>
-    <div class="flex gap-2">
-        <a href="/jury/contests/{{ contest.id }}/add-problem" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition">
-            从题库选题
-        </a>
-    </div>
+    <h1 class="text-2xl font-bold">{{ contest.title }} — 从题库选题</h1>
+    <a href="/jury/contests/{{ contest.id }}/problems" class="text-gray-400 hover:text-white transition">&larr; 返回题目列表</a>
 </div>
 
 <div class="bg-gray-800 rounded-lg overflow-hidden">
     <table class="w-full text-left">
         <thead class="bg-gray-700 text-gray-300">
             <tr>
-                <th class="px-4 py-3">顺序</th>
                 <th class="px-4 py-3">PID</th>
                 <th class="px-4 py-3">标题</th>
                 <th class="px-4 py-3">难度</th>
                 <th class="px-4 py-3">标签</th>
-                <th class="px-4 py-3">时间限制</th>
-                <th class="px-4 py-3">内存限制</th>
                 <th class="px-4 py-3">操作</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-700">
-            {% for problem in problems %}
+            {% for problem in all_problems %}
             <tr class="hover:bg-gray-750">
-                <td class="px-4 py-3">{{ problem.order }}</td>
                 <td class="px-4 py-3 text-gray-400 font-mono">{{ problem.pid }}</td>
                 <td class="px-4 py-3">{{ problem.title }}</td>
                 <td class="px-4 py-3">
@@ -55,23 +47,27 @@
                         {% endfor %}
                     {% endif %}
                 </td>
-                <td class="px-4 py-3">{{ problem.time_limit }}s</td>
-                <td class="px-4 py-3">{{ problem.memory_limit }} MB</td>
-                <td class="px-4 py-3 flex gap-2">
-                    <a href="/jury/bank/{{ problem.id }}/edit" class="text-blue-400 hover:underline">编辑</a>
-                    <a href="/jury/problems/{{ problem.id }}/testcases" class="text-green-400 hover:underline">测试数据</a>
+                <td class="px-4 py-3">
+                    {% if problem.id in added_ids %}
+                    <form method="post" action="/jury/contests/{{ contest.id }}/remove-problem" style="display:inline">
+                        <input type="hidden" name="problem_id" value="{{ problem.id }}">
+                        <button type="submit" class="text-red-400 hover:underline">移除</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="/jury/contests/{{ contest.id }}/add-problem" style="display:inline">
+                        <input type="hidden" name="problem_id" value="{{ problem.id }}">
+                        <input type="number" name="order" value="0" class="w-16 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm" placeholder="顺序">
+                        <button type="submit" class="text-green-400 hover:underline ml-1">添加</button>
+                    </form>
+                    {% endif %}
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="8" class="px-4 py-8 text-center text-gray-500">暂无题目 — 请先到题库创建题目</td>
+                <td colspan="5" class="px-4 py-8 text-center text-gray-500">题库为空</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-</div>
-
-<div class="mt-4">
-    <a href="/jury/contests" class="text-gray-400 hover:text-white transition">&larr; 返回比赛列表</a>
 </div>
 {% endblock %}
