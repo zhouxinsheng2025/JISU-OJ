@@ -1,8 +1,11 @@
 {% extends "base.html" %}
-{% block title %}登录 - 裁判系统{% endblock %}
+{% block title %}登录 - JISU裁判系统{% endblock %}
 {% block content %}
 <div class="max-w-md mx-auto mt-20">
-    <h1 class="text-3xl font-bold text-center mb-8">⚖ 程序设计裁判系统</h1>
+    <div class="text-center mb-8">
+    <img src="/static/emblem.webp" alt="校徽" class="w-16 h-16 mx-auto mb-3" style="object-fit:contain;">
+    <h1 class="text-3xl font-bold">JISU程序设计裁判系统</h1>
+</div>
     <div class="bg-gray-800 rounded-lg p-8 shadow-lg">
         <form method="POST" class="space-y-5">
             {% if error %}

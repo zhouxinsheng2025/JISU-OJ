@@ -49,3 +49,12 @@ async def toggle_contest(db: AsyncSession, contest_id: int) -> Contest | None:
     contest.enabled = not contest.enabled
     await db.commit()
     return contest
+
+
+async def delete_contest(db: AsyncSession, contest_id: int) -> bool:
+    contest = await get_contest(db, contest_id)
+    if contest is None:
+        return False
+    await db.delete(contest)
+    await db.commit()
+    return True

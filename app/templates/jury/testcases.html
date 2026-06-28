@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}裁判后台 - 测试数据管理{% endblock %}
+{% block title %}测试数据 - {{ problem.title }}{% endblock %}
 {% block nav %}
 <a href="/jury/" class="hover:text-blue-400">仪表盘</a>
 <a href="/jury/contests" class="text-blue-400 font-semibold">比赛</a>
@@ -9,81 +9,97 @@
 <a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
 {% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">{{ problem.title }} - 测试数据管理</h1>
 
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">{{ problem.title }} <span class="text-gray-500 text-lg">— 测试数据</span></h1>
+        <p class="text-gray-500 text-sm mt-1">共 {{ testcases|length }} 组测试数据</p>
+    </div>
+    <a href="/jury/contests/{{ problem.contest_id }}/problems" class="text-gray-400 hover:text-white transition">&larr; 返回题目列表</a>
+</div>
+
+<!-- ZIP批量上传 -->
+<div class="bg-gray-800 rounded-lg p-6 mb-6 border border-blue-500/30">
+    <h2 class="text-lg font-bold mb-2">📦 批量上传测试数据 (ZIP)</h2>
+    <p class="text-gray-400 text-sm mb-4">
+        上传ZIP压缩包，系统自动识别 <code class="text-yellow-400">.in</code>/<code class="text-yellow-400">.out</code> 文件对。
+        放在 <code class="text-green-400">sample/</code> 目录下为选手可见样例，<code class="text-red-400">secret/</code> 或根目录为隐藏数据。
+    </p>
+    <p class="text-gray-500 text-xs mb-4">
+        ZIP结构示例: <code class="text-gray-400">sample/1.in, sample/1.out, secret/1.in, secret/1.out, ...</code>
+    </p>
+    <form method="post" enctype="multipart/form-data" action="/jury/problems/{{ problem.id }}/testcases/zip" class="flex items-center gap-3 flex-wrap">
+        <input type="file" name="zipfile" accept=".zip" required
+               class="text-sm text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-blue-600 file:text-white file:border-0 file:text-sm hover:file:bg-blue-700 file:cursor-pointer">
+        <label class="inline-flex items-center text-sm text-gray-400 gap-1">
+            <input type="checkbox" name="replace" value="1" class="rounded">
+            替换全部旧数据
+        </label>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition text-sm">
+            上传导入
+        </button>
+    </form>
+</div>
+
+<!-- 测试数据列表 -->
+{% if testcases %}
 <div class="bg-gray-800 rounded-lg overflow-hidden mb-6">
     <table class="w-full text-left">
         <thead class="bg-gray-700 text-gray-300">
             <tr>
-                <th class="px-4 py-3">顺序</th>
-                <th class="px-4 py-3">样例?</th>
-                <th class="px-4 py-3">输入</th>
-                <th class="px-4 py-3">输出</th>
-                <th class="px-4 py-3">操作</th>
+                <th class="px-4 py-3 w-16">#</th>
+                <th class="px-4 py-3 w-16">类型</th>
+                <th class="px-4 py-3">输入预览</th>
+                <th class="px-4 py-3">输出预览</th>
+                <th class="px-4 py-3 w-16">操作</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-700">
             {% for tc in testcases %}
             <tr class="hover:bg-gray-750">
-                <td class="px-4 py-3">{{ tc.order }}</td>
+                <td class="px-4 py-3 text-gray-400">{{ tc.order }}</td>
                 <td class="px-4 py-3">
                     {% if tc.is_sample %}
-                    <span class="text-green-400">是</span>
+                    <span class="text-green-400 text-xs bg-green-400/10 px-2 py-0.5 rounded">样例</span>
                     {% else %}
-                    <span class="text-gray-500">否</span>
+                    <span class="text-gray-500 text-xs bg-gray-600/20 px-2 py-0.5 rounded">隐藏</span>
                     {% endif %}
                 </td>
-                <td class="px-4 py-3">
-                    <code class="text-sm text-gray-300">{{ tc.input[:80] }}{% if tc.input|length > 80 %}...{% endif %}</code>
-                </td>
-                <td class="px-4 py-3">
-                    <code class="text-sm text-gray-300">{{ tc.output[:80] }}{% if tc.output|length > 80 %}...{% endif %}</code>
-                </td>
+                <td class="px-4 py-3"><code class="text-xs text-gray-300">{{ tc.input[:100] }}{% if tc.input|length > 100 %}...{% endif %}</code></td>
+                <td class="px-4 py-3"><code class="text-xs text-gray-300">{{ tc.output[:100] }}{% if tc.output|length > 100 %}...{% endif %}</code></td>
                 <td class="px-4 py-3">
                     <form method="post" action="/jury/problems/{{ problem.id }}/testcases/delete/{{ tc.id }}" style="display:inline">
-                        <button type="submit" class="text-red-400 hover:underline" onclick="return confirm('确定删除此测试数据?')">删除</button>
+                        <button type="submit" class="text-red-400 hover:underline text-sm" onclick="return confirm('删除此测试数据?')">删除</button>
                     </form>
                 </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" class="px-4 py-8 text-center text-gray-500">暂无测试数据</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+{% endif %}
 
-<div class="bg-gray-800 rounded-lg p-6 max-w-2xl">
-    <h2 class="text-xl font-bold mb-4">添加测试数据</h2>
-    <form method="post" action="/jury/problems/{{ problem.id }}/testcases/new">
-        <div class="mb-4">
-            <label class="block text-gray-300 mb-2" for="input">输入</label>
-            <textarea id="input" name="input" rows="4"
-                      class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 font-mono text-sm"></textarea>
-        </div>
-
-        <div class="mb-4">
-            <label class="block text-gray-300 mb-2" for="output">输出</label>
-            <textarea id="output" name="output" rows="4"
-                      class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 font-mono text-sm"></textarea>
-        </div>
-
-        <div class="mb-4">
-            <label class="inline-flex items-center">
-                <input type="checkbox" name="is_sample" value="1" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded">
-                <span class="ml-2 text-gray-300">样例测试数据</span>
+<!-- 手动添加 -->
+<details class="bg-gray-800 rounded-lg overflow-hidden">
+    <summary class="px-6 py-3 cursor-pointer hover:bg-gray-750 text-gray-400 text-sm">+ 手动添加单组测试数据</summary>
+    <div class="p-6 border-t border-gray-700">
+        <form method="post" action="/jury/problems/{{ problem.id }}/testcases/new" class="space-y-4">
+            <div>
+                <label class="block text-gray-300 text-sm mb-1">输入</label>
+                <textarea name="input" rows="3" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 font-mono text-sm"></textarea>
+            </div>
+            <div>
+                <label class="block text-gray-300 text-sm mb-1">期望输出</label>
+                <textarea name="output" rows="3" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 font-mono text-sm"></textarea>
+            </div>
+            <label class="inline-flex items-center text-sm text-gray-400 gap-2">
+                <input type="checkbox" name="is_sample" value="1" class="rounded"> 选手可见样例
             </label>
-        </div>
+            <div>
+                <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition text-sm">添加</button>
+            </div>
+        </form>
+    </div>
+</details>
 
-        <div class="flex gap-3 mt-6">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition">
-                添加测试数据
-            </button>
-            <a href="/jury/contests/{{ problem.contest_id }}/problems" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition text-center">
-                返回题目列表
-            </a>
-        </div>
-    </form>
-</div>
 {% endblock %}

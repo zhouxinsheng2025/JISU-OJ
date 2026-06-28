@@ -1,0 +1,15 @@
+[Unit]
+Description=JISU程序设计裁判系统
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/jisu-oj
+ExecStart=/usr/bin/python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

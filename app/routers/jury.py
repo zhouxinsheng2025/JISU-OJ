@@ -141,6 +141,13 @@ async def toggle_contest_action(contest_id: int, user: User = Depends(require_ro
     return RedirectResponse(url="/jury/contests", status_code=303)
 
 
+# ── 删除比赛 ──
+@router.post("/contests/{contest_id}/delete")
+async def delete_contest_action(contest_id: int, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
+    await contest_service.delete_contest(db, contest_id)
+    return RedirectResponse(url="/jury/contests", status_code=303)
+
+
 # ── 队伍列表 ──
 @router.get("/teams")
 async def list_teams(request: Request, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
@@ -227,6 +234,18 @@ async def edit_team(
     return RedirectResponse(url="/jury/teams", status_code=303)
 
 
+# ── 删除队伍 ──
+@router.post("/teams/{team_id}/delete")
+async def delete_team(team_id: int, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import select
+    result = await db.execute(select(User).where(User.id == team_id))
+    team = result.scalar_one_or_none()
+    if team:
+        await db.delete(team)
+        await db.commit()
+    return RedirectResponse(url="/jury/teams", status_code=303)
+
+
 # ── 题目列表 ──
 @router.get("/contests/{contest_id}/problems")
 async def list_problems(contest_id: int, request: Request, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
@@ -280,7 +299,8 @@ async def create_problem(
     )
     db.add(problem)
     await db.commit()
-    return RedirectResponse(url=f"/jury/contests/{contest_id}/problems", status_code=303)
+    await db.refresh(problem)
+    return RedirectResponse(url=f"/jury/problems/{problem.id}/testcases", status_code=303)
 
 
 # ── 编辑题目 ──
@@ -364,6 +384,25 @@ async def add_testcase(
     )
     db.add(tc)
     await db.commit()
+    return RedirectResponse(url=f"/jury/problems/{problem_id}/testcases", status_code=303)
+
+
+# ── ZIP批量上传测试数据 ──
+@router.post("/problems/{problem_id}/testcases/zip")
+async def upload_testdata_zip(
+    problem_id: int,
+    request: Request,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    from fastapi import UploadFile, File
+    from app.services.testcase_service import import_testcases_from_zip
+    form = await request.form()
+    file: UploadFile = form.get("zipfile")
+    replace = form.get("replace", "0") == "1"
+    if file and file.filename and file.filename.endswith('.zip'):
+        content = await file.read()
+        count = await import_testcases_from_zip(db, problem_id, content, replace=replace)
     return RedirectResponse(url=f"/jury/problems/{problem_id}/testcases", status_code=303)
 
 

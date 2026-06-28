@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.models import Submission, SubmissionState, Problem, Contest, Judging, JudgeRun
 
 
@@ -30,6 +31,7 @@ async def create_submission(
 async def get_team_submissions(db: AsyncSession, team_id: int) -> list[Submission]:
     result = await db.execute(
         select(Submission)
+        .options(selectinload(Submission.problem))
         .where(Submission.team_id == team_id)
         .order_by(Submission.submit_time.desc())
         .limit(50)
@@ -39,12 +41,13 @@ async def get_team_submissions(db: AsyncSession, team_id: int) -> list[Submissio
 
 async def get_submission_detail(db: AsyncSession, submission_id: int) -> Submission | None:
     result = await db.execute(
-        select(Submission).where(Submission.id == submission_id)
+        select(Submission)
+        .options(selectinload(Submission.problem))
+        .where(Submission.id == submission_id)
     )
     submission = result.scalar_one_or_none()
     if submission is None:
         return None
-    # eager load judgings and judgeruns
     judging_result = await db.execute(
         select(Judging).where(Judging.submission_id == submission_id).order_by(Judging.id.desc())
     )

@@ -63,7 +63,19 @@
       "Bash(python -c \"import ast; ast.parse\\(open\\('app/main.py'\\).read\\(\\)\\); print\\('main.py: syntax OK'\\)\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('app/judge/engine.py', encoding='utf-8'\\).read\\(\\)\\); print\\('engine.py: syntax OK'\\)\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('app/main.py', encoding='utf-8'\\).read\\(\\)\\); print\\('main.py: syntax OK'\\)\")",
-      "Bash(python -m py_compile app/judge/engine.py)"
+      "Bash(python -m py_compile app/judge/engine.py)",
+      "Bash(taskkill /f /im python.exe)",
+      "Bash(mv \"校徽.webp\" \"app/static/校徽.webp\")",
+      "Bash(mkdir -p app/static)",
+      "Bash(python -c \"import os; d=os.path.join\\(os.path.dirname\\('app/main.py'\\), 'static'\\); print\\(d\\); print\\(os.path.exists\\(d\\)\\); print\\(os.listdir\\(d\\) if os.path.exists\\(d\\) else 'NOT FOUND'\\)\")",
+      "Bash(uvicorn app.main:app --host 0.0.0.0 --port 8000)",
+      "Bash(awk '{print $5}')",
+      "Bash(taskkill /f /fi \"PID ge 10000\")",
+      "Bash(uvicorn app.main:app --host 0.0.0.0 --port 8001)",
+      "Bash(powershell -Command \"Get-Process -Name python* | Stop-Process -Force\")",
+      "Bash(mkdir -p runs)",
+      "WebSearch",
+      "Bash(cd /tmp)"
     ]
   }
 }

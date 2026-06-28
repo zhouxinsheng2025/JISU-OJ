@@ -52,6 +52,9 @@
                             {% if contest.enabled %}禁用{% else %}启用{% endif %}
                         </button>
                     </form>
+                    <form method="post" action="/jury/contests/{{ contest.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除该比赛及所有关联数据？')">
+                        <button type="submit" class="text-red-400 hover:underline">删除</button>
+                    </form>
                 </td>
             </tr>
             {% else %}

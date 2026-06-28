@@ -1,19 +1,26 @@
-import asyncio
+import asyncio, os
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from app.config import settings
 from app.judge.engine import judge_loop
 
-app = FastAPI(title="程序设计裁判系统")
+app = FastAPI(title="JISU程序设计裁判系统")
+
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+
+@app.get("/static/{filename}")
+async def static_file(filename: str):
+    return FileResponse(os.path.join(STATIC_DIR, filename))
 
 
 @app.on_event("startup")
 async def startup():
+    # 确保必要目录存在
+    os.makedirs(settings.RUNS_DIR, exist_ok=True)
+    os.makedirs(settings.DATA_DIR, exist_ok=True)
     from app.database import init_db
     await init_db()
-    # 创建默认管理员（后续 Task 6 会改为 seed）
     await _seed_admin()
-    # 启动判题引擎后台任务
     asyncio.create_task(judge_loop())
 
 
