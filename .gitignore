@@ -5,3 +5,6 @@ judge.db
 runs/
 *.egg-info/
 .env
+
+judge.db-shm
+judge.db-wal

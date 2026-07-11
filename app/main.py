@@ -2,7 +2,7 @@ import asyncio, os
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse, FileResponse
 from app.config import settings
-from app.judge.engine import judge_loop
+from app.judge.engine import start_judge_engine
 
 app = FastAPI(title="JISU程序设计裁判系统")
 
@@ -22,7 +22,7 @@ async def startup():
     await init_db()
     await _seed_admin()
     await _seed_practice_contest()
-    asyncio.create_task(judge_loop())
+    await start_judge_engine()
 
 
 async def _seed_admin():

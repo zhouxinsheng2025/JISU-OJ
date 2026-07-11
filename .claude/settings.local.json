@@ -77,7 +77,14 @@
       "WebSearch",
       "Bash(cd /tmp)",
       "Bash(python -c \"import ast; ast.parse\\(open\\('app/routers/jury.py', encoding='utf-8'\\).read\\(\\)\\); print\\('jury.py OK'\\)\")",
-      "Bash(python -c \"import secrets; print\\(secrets.token_hex\\(32\\)\\)\")"
+      "Bash(python -c \"import secrets; print\\(secrets.token_hex\\(32\\)\\)\")",
+      "Bash(sleep 2)",
+      "Bash(cd \"C:\\\\Users\\\\24338\\\\Desktop\\\\裁判系统\")",
+      "Bash(git rm *)",
+      "Bash(echo \"judge.db-shm\")",
+      "Bash(echo \"judge.db-wal\")",
+      "Bash(git reset *)",
+      "Bash(echo \"\")"
     ]
   }
 }
