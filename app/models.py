@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, ForeignKey, Enum as SAEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, ForeignKey, UniqueConstraint, Enum as SAEnum
 from sqlalchemy.orm import DeclarativeBase, relationship
 import enum
 
@@ -182,6 +182,7 @@ class Clarification(Base):
 
 class ScoreboardCache(Base):
     __tablename__ = "scoreboard"
+    __table_args__ = (UniqueConstraint("contest_id", "team_id", "problem_id"),)
     id = Column(Integer, primary_key=True, autoincrement=True)
     contest_id = Column(Integer, ForeignKey("contests.id"), nullable=False)
     team_id = Column(Integer, ForeignKey("users.id"), nullable=False)

@@ -300,9 +300,22 @@ async def edit_team(
 # ── 删除队伍 ──
 @router.post("/teams/{team_id}/delete")
 async def delete_team(team_id: int, user: User = Depends(require_role("jury")), db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import delete
+    from app.models import Submission, Judging, JudgeRun, Clarification, ScoreboardCache, UserProgress
     result = await db.execute(select(User).where(User.id == team_id))
     team = result.scalar_one_or_none()
     if team:
+        # 级联删除队伍的所有数据
+        sub_result = await db.execute(select(Submission.id).where(Submission.team_id == team_id))
+        for (sid,) in sub_result.all():
+            jr = await db.execute(select(Judging.id).where(Judging.submission_id == sid))
+            for (jid,) in jr.all():
+                await db.execute(delete(JudgeRun).where(JudgeRun.judging_id == jid))
+            await db.execute(delete(Judging).where(Judging.submission_id == sid))
+        await db.execute(delete(Submission).where(Submission.team_id == team_id))
+        await db.execute(delete(ScoreboardCache).where(ScoreboardCache.team_id == team_id))
+        await db.execute(delete(Clarification).where(Clarification.sender_id == team_id))
+        await db.execute(delete(UserProgress).where(UserProgress.user_id == team_id))
         await db.delete(team)
         await db.commit()
     return RedirectResponse(url="/jury/teams", status_code=303)

@@ -239,8 +239,9 @@ async def _update_scoreboard(db: AsyncSession, submission: Submission, verdict: 
             return
         entry.is_correct = True
         entry.score = max(entry.score, score)
-        elapsed = int((submission.submit_time - contest.start_time).total_seconds() / 60)
-        entry.total_time = elapsed + (entry.submissions - 1) * 20
+        if contest:
+            elapsed = int((submission.submit_time - contest.start_time).total_seconds() / 60)
+            entry.total_time = elapsed + (entry.submissions - 1) * 20
     else:
         entry.score = max(entry.score, score)
 

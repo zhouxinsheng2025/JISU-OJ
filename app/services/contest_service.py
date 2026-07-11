@@ -58,6 +58,28 @@ async def delete_contest(db: AsyncSession, contest_id: int) -> bool:
     contest = await get_contest(db, contest_id)
     if contest is None:
         return False
+    # 级联删除关联数据: ContestProblem, ScoreboardCache, 提交及判题, 问答
+    from app.models import ContestProblem, ScoreboardCache, Submission, Judging, JudgeRun, Clarification
+    from sqlalchemy import delete
+
+    # 1. 删除 ContestProblem 关联
+    await db.execute(delete(ContestProblem).where(ContestProblem.contest_id == contest_id))
+    # 2. 删除计分板缓存
+    await db.execute(delete(ScoreboardCache).where(ScoreboardCache.contest_id == contest_id))
+    # 3. 删除问答
+    await db.execute(delete(Clarification).where(Clarification.contest_id == contest_id))
+    # 4. 删除提交的判题记录 + 提交本身
+    sub_result = await db.execute(
+        select(Submission.id).where(Submission.contest_id == contest_id)
+    )
+    sub_ids = [row[0] for row in sub_result.all()]
+    for sid in sub_ids:
+        j_result = await db.execute(select(Judging.id).where(Judging.submission_id == sid))
+        for j_row in j_result.all():
+            await db.execute(delete(JudgeRun).where(JudgeRun.judging_id == j_row[0]))
+        await db.execute(delete(Judging).where(Judging.submission_id == sid))
+    await db.execute(delete(Submission).where(Submission.contest_id == contest_id))
+    # 5. 删除比赛
     await db.delete(contest)
     await db.commit()
     return True

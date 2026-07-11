@@ -47,9 +47,13 @@ def parse_luogu_zip(zip_bytes: bytes) -> dict | None:
                     if 'title' in config:
                         title = config['title']
                     if 'time' in config:
-                        time_limit = float(str(config['time']).replace('s', '').replace('ms', ''))
-                        if 'ms' in str(config.get('time', '')):
-                            time_limit /= 1000
+                        t_str = str(config['time']).strip().lower()
+                        if 'ms' in t_str:
+                            time_limit = float(t_str.replace('ms', '')) / 1000
+                        elif 's' in t_str:
+                            time_limit = float(t_str.replace('s', ''))
+                        else:
+                            time_limit = float(t_str)
                     elif 'timeLimit' in config:
                         time_limit = float(config['timeLimit']) / 1000 if config['timeLimit'] > 100 else float(config['timeLimit'])
                     if 'memory' in config:
