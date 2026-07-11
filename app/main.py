@@ -40,7 +40,10 @@ async def _seed_admin():
                 role=UserRole.JURY,
             )
             db.add(admin)
-            await db.commit()
+            try:
+                await db.commit()
+            except Exception:
+                await db.rollback()  # 多worker竞争，已被其他worker创建
 
 
 async def _seed_practice_contest():
@@ -63,7 +66,10 @@ async def _seed_practice_contest():
                 enabled=True,
             )
             db.add(practice)
-            await db.commit()
+            try:
+                await db.commit()
+            except Exception:
+                await db.rollback()
             print("[Seed] 开放练习比赛已创建")
 
 

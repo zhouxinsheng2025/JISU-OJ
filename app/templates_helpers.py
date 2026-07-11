@@ -1,3 +1,5 @@
-from fastapi.templating import Jinja2Templates
+import os
+from starlette.templating import Jinja2Templates
 
-templates = Jinja2Templates(directory="app/templates")
+_dir = os.path.join(os.path.dirname(__file__), 'templates')
+templates = Jinja2Templates(directory=_dir)
