@@ -12,9 +12,15 @@
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold">题库</h1>
-    <a href="/jury/bank/new" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-        + 新建题目
-    </a>
+    <div class="flex gap-2">
+        <a href="/jury/bank/new" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm">+ 新建题目</a>
+        <form method="post" enctype="multipart/form-data" action="/jury/bank/import-luogu" class="inline-flex">
+            <label class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition text-sm cursor-pointer">
+                📦 导入洛谷题目
+                <input type="file" name="zipfile" accept=".zip" class="hidden" onchange="this.form.submit()">
+            </label>
+        </form>
+    </div>
 </div>
 
 <!-- 筛选 -->

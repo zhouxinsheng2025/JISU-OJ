@@ -11,8 +11,15 @@
 {% endblock %}
 {% block content %}
 <div class="max-w-6xl mx-auto">
-    <h1 class="text-2xl font-bold mb-2">{{ contest.title }} - 计分板</h1>
-    <p class="text-gray-400 text-sm mb-4">裁判查看 — 显示全部真实数据</p>
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h1 class="text-2xl font-bold mb-1">{{ contest.title }} - 计分板</h1>
+            <p class="text-gray-400 text-sm">裁判查看 — 显示全部真实数据</p>
+        </div>
+        <a href="/jury/scoreboard/{{ contest.id }}/export" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition text-sm">
+            📥 导出Excel成绩单
+        </a>
+    </div>
 
     <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
         <table class="w-full text-left">

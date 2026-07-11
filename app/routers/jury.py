@@ -1,3 +1,4 @@
+import io
 from fastapi import APIRouter, Request, Depends, Form, Query, UploadFile, File
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,6 +45,24 @@ async def jury_scoreboard(
     return templates.TemplateResponse(
         f"{TEMPLATE_DIR}/scoreboard.html",
         {"request": request, "user": user, "contest": contest, "board": board, "problems": problems},
+    )
+
+
+# ── 导出成绩 ──
+@router.get("/scoreboard/{contest_id}/export")
+async def export_scoreboard(
+    contest_id: int,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    from fastapi.responses import StreamingResponse
+    from app.services.export_service import export_contest_excel
+
+    excel_bytes = await export_contest_excel(db, contest_id)
+    return StreamingResponse(
+        io.BytesIO(excel_bytes),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=contest_{contest_id}_results.xlsx"},
     )
 
 
@@ -415,6 +434,24 @@ async def delete_bank_problem(
     if problem:
         await db.delete(problem)
         await db.commit()
+    return RedirectResponse(url="/jury/bank", status_code=303)
+
+
+# ── 洛谷/Hydro 格式题目导入 ──
+@router.post("/bank/import-luogu")
+async def import_luogu_problem(
+    request: Request,
+    user: User = Depends(require_role("jury")),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.services.luogu_import import import_from_luogu_zip
+    form = await request.form()
+    file = form.get("zipfile")
+    if file and file.filename and file.filename.endswith('.zip'):
+        content = await file.read()
+        problem = await import_from_luogu_zip(db, content)
+        if problem:
+            return RedirectResponse(url=f"/jury/problems/{problem.id}/testcases", status_code=303)
     return RedirectResponse(url="/jury/bank", status_code=303)
 
 
