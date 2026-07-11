@@ -12,6 +12,7 @@
   SQLite:     UPDATE + SELECT 在事务内原子完成
 """
 import asyncio
+import logging
 import os
 import shutil
 import tempfile
@@ -29,17 +30,44 @@ from app.judge.compiler import compile_code
 from app.judge.runner import run_program
 from app.judge.scorer import compare_output, calculate_icpc_result, calculate_ioi_result
 
+logger = logging.getLogger(__name__)
+
+# WebSocket 订阅者列表
+_subscribers: list[asyncio.Queue] = []
+
+
+def subscribe() -> asyncio.Queue:
+    """注册一个 WebSocket 订阅者，返回事件队列。"""
+    queue: asyncio.Queue = asyncio.Queue(maxsize=100)
+    _subscribers.append(queue)
+    return queue
+
+
+def unsubscribe(queue: asyncio.Queue) -> None:
+    """取消注册。"""
+    if queue in _subscribers:
+        _subscribers.remove(queue)
+
+
+async def _publish(event: dict) -> None:
+    """向所有订阅者广播事件。"""
+    for queue in _subscribers:
+        try:
+            queue.put_nowait(event)
+        except asyncio.QueueFull:
+            pass
+
 
 async def start_judge_engine():
     """启动判题引擎 — 创建多个并行 worker"""
     for i in range(settings.JUDGE_WORKERS):
         asyncio.create_task(judge_worker(i))
-    print(f"[Judge] {settings.JUDGE_WORKERS} 个判题 worker 已启动")
+    logger.info("%d 个判题 worker 已启动", settings.JUDGE_WORKERS)
 
 
 async def judge_worker(worker_id: int):
     """判题 worker — 独立轮询，原子认领提交"""
-    print(f"[Judge-{worker_id}] 启动")
+    logger.info("Worker-%d 启动", worker_id)
     while True:
         try:
             submission_id = await _claim_submission(worker_id)
@@ -48,7 +76,7 @@ async def judge_worker(worker_id: int):
             else:
                 await asyncio.sleep(settings.JUDGE_POLL_INTERVAL)
         except Exception as e:
-            print(f"[Judge-{worker_id}] 错误: {e}")
+            logger.error("Worker-%d 错误: %s", worker_id, e, exc_info=True)
             await asyncio.sleep(settings.JUDGE_POLL_INTERVAL)
 
 
@@ -200,6 +228,16 @@ async def _judge_submission(submission_id: int, worker_id: int):
             # 更新计分板 + 用户进度
             await _update_scoreboard(db, submission, final_verdict, final_score, contest)
             await _update_progress(db, submission.team_id, submission.problem_id, final_verdict)
+
+            # 通知 WebSocket 订阅者
+            await _publish({
+                "type": "judging_done",
+                "submission_id": submission.id,
+                "team_id": submission.team_id,
+                "problem_id": submission.problem_id,
+                "verdict": final_verdict,
+                "score": final_score,
+            })
 
         except Exception as e:
             if judging:

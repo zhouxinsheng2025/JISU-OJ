@@ -84,7 +84,13 @@
       "Bash(echo \"judge.db-shm\")",
       "Bash(echo \"judge.db-wal\")",
       "Bash(git reset *)",
-      "Bash(echo \"\")"
+      "Bash(echo \"\")",
+      "WebFetch(domain:free.aliyun.com)",
+      "Bash(sshpass *)",
+      "Bash(python3 *)",
+      "Bash(expect *)",
+      "Bash(python -c \"import paramiko; print\\('OK'\\)\")",
+      "Bash(python *)"
     ]
   }
 }

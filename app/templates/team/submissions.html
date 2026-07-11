@@ -114,14 +114,30 @@
 </div>
 
 <script>
-// 每 5 秒自动刷新，检查是否有排队或判题中的提交
+// WebSocket 实时更新: 判题完成后自动刷新
 (function() {
     var hasPending = {{ 'true' if submission_data|selectattr('submission.state', 'in', ['queued', 'judging'])|list|length > 0 else 'false' }};
+
+    // 如果有排队中的提交，5秒后轮询刷新（兜底方案）
     if (hasPending) {
         setTimeout(function() {
             location.reload();
         }, 5000);
     }
+
+    // WebSocket: 收到判题完成事件立即刷新
+    try {
+        var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        var ws = new WebSocket(proto + '//' + location.host + '/ws/judge-updates');
+        ws.onmessage = function(event) {
+            try {
+                var data = JSON.parse(event.data);
+                if (data.type === 'judging_done') {
+                    location.reload();
+                }
+            } catch(e) {}
+        };
+    } catch(e) {}
 })();
 </script>
 {% endblock %}

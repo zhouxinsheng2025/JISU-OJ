@@ -672,22 +672,25 @@ async def jury_submissions(
     db: AsyncSession = Depends(get_db),
 ):
     from app.models import Submission, Judging
+    from sqlalchemy.orm import selectinload
 
     result = await db.execute(
-        select(Submission).order_by(Submission.submit_time.desc()).limit(100)
+        select(Submission)
+        .options(
+            selectinload(Submission.team),
+            selectinload(Submission.problem),
+            selectinload(Submission.judgings),
+        )
+        .order_by(Submission.submit_time.desc())
+        .limit(100)
     )
-    submissions = list(result.scalars().all())
+    submissions = list(result.unique().scalars().all())
 
     sub_data = []
     for sub in submissions:
-        j_result = await db.execute(
-            select(Judging)
-            .where(Judging.submission_id == sub.id)
-            .order_by(Judging.id.desc())
-        )
-        jud = j_result.scalar_one_or_none()
-        await db.refresh(sub, ["team", "problem"])
-        sub_data.append({"submission": sub, "judging": jud})
+        # 取最新的一条判题记录（已经是关联加载的）
+        judging = sub.judgings[-1] if sub.judgings else None
+        sub_data.append({"submission": sub, "judging": judging})
 
     return templates.TemplateResponse(
         f"{TEMPLATE_DIR}/submissions.html",

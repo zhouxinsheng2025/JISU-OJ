@@ -36,7 +36,7 @@ async def public_scoreboard(
 
     now = datetime.utcnow()
     freeze = contest.freeze_time is not None and now >= contest.freeze_time
-    board = await score_service.get_scoreboard(db, contest.id, freeze=freeze)
+    board = await score_service.get_scoreboard(db, contest.id, freeze=freeze, freeze_time=contest.freeze_time)
     problems = await score_service.get_contest_problems(db, contest.id)
     return templates.TemplateResponse(
         "public/scoreboard.html",

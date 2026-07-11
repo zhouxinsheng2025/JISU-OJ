@@ -22,7 +22,22 @@ async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit
 
 async def init_db():
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        # 优先使用 Alembic 迁移；失败时回退到 create_all
+        try:
+            from alembic.config import Config as AlembicConfig
+            from alembic import command
+            import os
+            alembic_cfg = AlembicConfig(
+                os.path.join(os.path.dirname(__file__), "..", "alembic.ini")
+            )
+            # 覆盖 alembic.ini 中的 URL（使用 app 配置的值）
+            alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+            # 在连接上运行迁移
+            await conn.run_sync(lambda sync_conn: command.upgrade(alembic_cfg, "head"))
+        except Exception:
+            # 回退: 直接建表（适用于首次运行或 Alembic 不可用时）
+            await conn.run_sync(Base.metadata.create_all)
+
         # SQLite: 开启 WAL 模式提升读并发
         if "sqlite" in settings.DATABASE_URL:
             await conn.exec_driver_sql("PRAGMA journal_mode=WAL")

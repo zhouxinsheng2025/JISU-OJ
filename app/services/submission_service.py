@@ -31,12 +31,15 @@ async def create_submission(
 async def get_team_submissions(db: AsyncSession, team_id: int) -> list[Submission]:
     result = await db.execute(
         select(Submission)
-        .options(selectinload(Submission.problem))
+        .options(
+            selectinload(Submission.problem),
+            selectinload(Submission.judgings),
+        )
         .where(Submission.team_id == team_id)
         .order_by(Submission.submit_time.desc())
         .limit(50)
     )
-    return list(result.scalars().all())
+    return list(result.unique().scalars().all())
 
 
 async def get_practice_submissions(db: AsyncSession, team_id: int) -> list[Submission]:

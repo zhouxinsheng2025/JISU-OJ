@@ -30,6 +30,15 @@ class Settings(BaseSettings):
     # 计分板缓存 (秒)
     SCOREBOARD_CACHE_TTL: int = 5
 
+    # 管理员默认凭据 (生产环境请通过 .env 修改)
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = ""
+
+    # 运行模式
+    PRODUCTION: bool = False
+    LOG_LEVEL: str = "INFO"
+    LOG_FILE: str = ""  # 留空则只输出到控制台
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

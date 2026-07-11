@@ -282,7 +282,7 @@ async def team_scoreboard(
             {"request": request, "user": user, "contest": None, "error": "没有进行中的比赛"},
         )
     freeze = contest.freeze_time is not None and now >= contest.freeze_time
-    board = await score_service.get_scoreboard(db, contest.id, freeze=freeze)
+    board = await score_service.get_scoreboard(db, contest.id, freeze=freeze, freeze_time=contest.freeze_time)
     problems = await score_service.get_contest_problems(db, contest.id)
     return templates.TemplateResponse(
         f"{TEMPLATE_DIR}/scoreboard.html",
@@ -302,12 +302,8 @@ async def my_submissions(
 
     submission_data = []
     for sub in submissions:
-        j_result = await db.execute(
-            select(Judging)
-            .where(Judging.submission_id == sub.id)
-            .order_by(Judging.id.desc())
-        )
-        judging = j_result.scalar_one_or_none()
+        # judgings 已通过 selectinload 预加载，无需额外查询
+        judging = sub.judgings[-1] if sub.judgings else None
         submission_data.append({"submission": sub, "judging": judging})
     return templates.TemplateResponse(
         f"{TEMPLATE_DIR}/submissions.html",

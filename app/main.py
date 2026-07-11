@@ -1,10 +1,20 @@
-import asyncio, os
-from fastapi import FastAPI
+import asyncio, os, secrets, logging
+from fastapi import FastAPI, WebSocket
 from fastapi.responses import RedirectResponse, FileResponse
 from app.config import settings
 from app.judge.engine import start_judge_engine
+from app.logging_config import configure_logging
+from app.middleware import rate_limit_middleware
 
-app = FastAPI(title="JISU程序设计裁判系统")
+logger = logging.getLogger(__name__)
+
+app = FastAPI(
+    title="JISU程序设计裁判系统",
+    docs_url="/docs" if not settings.PRODUCTION else None,
+    redoc_url="/redoc" if not settings.PRODUCTION else None,
+)
+
+app.middleware("http")(rate_limit_middleware)
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
@@ -16,6 +26,7 @@ async def static_file(filename: str):
 
 @app.on_event("startup")
 async def startup():
+    configure_logging()
     os.makedirs(settings.RUNS_DIR, exist_ok=True)
     os.makedirs(settings.DATA_DIR, exist_ok=True)
     from app.database import init_db
@@ -31,17 +42,30 @@ async def _seed_admin():
     from app.services.auth_service import hash_password
     async with async_session() as db:
         from sqlalchemy import select
-        result = await db.execute(select(User).where(User.username == "chenjingbo"))
+        username = settings.ADMIN_USERNAME
+        password = settings.ADMIN_PASSWORD
+        # 如果未配置密码，自动生成一个并打印到控制台（仅首次）
+        if not password:
+            password = secrets.token_urlsafe(12)
+            logger.warning("=" * 55)
+            logger.warning("  未配置 ADMIN_PASSWORD，已自动生成管理员密码")
+            logger.warning(f"  用户名: {username}")
+            logger.warning(f"  密码:   {password}")
+            logger.warning("  请通过 .env 的 ADMIN_PASSWORD 设置自定义密码")
+            logger.warning("=" * 55)
+
+        result = await db.execute(select(User).where(User.username == username))
         if result.scalar_one_or_none() is None:
             admin = User(
-                username="chenjingbo",
-                password_hash=hash_password("880730"),
+                username=username,
+                password_hash=hash_password(password),
                 teamname="Administrator",
                 role=UserRole.JURY,
             )
             db.add(admin)
             try:
                 await db.commit()
+                logger.info("管理员账号已创建 (username=%s)", username)
             except Exception:
                 await db.rollback()  # 多worker竞争，已被其他worker创建
 
@@ -70,7 +94,7 @@ async def _seed_practice_contest():
                 await db.commit()
             except Exception:
                 await db.rollback()
-            print("[Seed] 开放练习比赛已创建")
+            logger.info("开放练习比赛已创建")
 
 
 # 注册路由
@@ -84,3 +108,32 @@ app.include_router(public.router)
 @app.get("/")
 async def root():
     return RedirectResponse(url="/auth/login")
+
+
+@app.get("/health")
+async def health_check():
+    """健康检查端点 — 供负载均衡器探测。"""
+    try:
+        from app.database import async_session
+        from sqlalchemy import text
+        async with async_session() as db:
+            await db.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "connected"}
+    except Exception as e:
+        return {"status": "error", "database": str(e)}
+
+
+@app.websocket("/ws/judge-updates")
+async def judge_websocket(websocket):
+    """WebSocket 端点 — 判题完成后实时推送结果。"""
+    from fastapi import WebSocketDisconnect
+    from app.judge.engine import subscribe, unsubscribe
+
+    await websocket.accept()
+    queue = subscribe()
+    try:
+        while True:
+            event = await queue.get()
+            await websocket.send_json(event)
+    except (WebSocketDisconnect, Exception):
+        unsubscribe(queue)

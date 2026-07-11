@@ -1,8 +1,14 @@
-import subprocess
-import os
 import asyncio
+import logging
+import os
+import subprocess
+import time
+
 import psutil
+
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 async def run_program(
@@ -61,9 +67,16 @@ async def _run_with_limits(
     time_limit: float,
     memory_limit_mb: int,
 ) -> float:
-    """执行命令并施加资源限制"""
-    import time
+    """执行命令并施加时间和内存限制。"""
+    memory_limit_bytes = memory_limit_mb * 1024 * 1024
+    # 为 Java/Python 虚拟机预留 64MB 额外开销
+    memory_limit_bytes += 64 * 1024 * 1024
+
     start = time.time()
+    oom_event = asyncio.Event()
+
+    # Unix: 通过 preexec_fn 设置进程资源限制
+    preexec_fn = _make_preexec_fn(time_limit + 5, memory_limit_bytes + 128 * 1024 * 1024)
 
     with open(stdout_path, "w") as fout, open(stderr_path, "w") as ferr:
         proc = await asyncio.create_subprocess_shell(
@@ -72,25 +85,129 @@ async def _run_with_limits(
             stdin=asyncio.subprocess.PIPE,
             stdout=fout,
             stderr=ferr,
+            preexec_fn=preexec_fn,
         )
+
+        # 启动内存监控任务
+        monitor_task = asyncio.create_task(
+            _monitor_memory(proc.pid, memory_limit_bytes, oom_event)
+        )
+
         try:
             await asyncio.wait_for(
                 proc.communicate(input=stdin_data.encode()),
-                timeout=time_limit + 2,  # 额外2秒缓冲
+                timeout=time_limit + 2,
             )
         except asyncio.TimeoutError:
-            try:
-                parent = psutil.Process(proc.pid)
-                for child in parent.children(recursive=True):
-                    child.kill()
-                parent.kill()
-            except psutil.NoSuchProcess:
-                pass
+            _kill_process_tree(proc.pid)
             await proc.wait()
             raise subprocess.TimeoutExpired(cmd, time_limit)
+        finally:
+            monitor_task.cancel()
+            try:
+                await monitor_task
+            except asyncio.CancelledError:
+                pass
+
+    # 检查是否触发内存超限
+    if oom_event.is_set():
+        raise MemoryError(f"Memory limit {memory_limit_mb}MB exceeded")
 
     runtime = time.time() - start
     if proc.returncode != 0 and proc.returncode is not None:
         raise RuntimeError(f"Exit code: {proc.returncode}")
 
     return runtime
+
+
+async def _monitor_memory(
+    pid: int,
+    memory_limit_bytes: int,
+    oom_event: asyncio.Event,
+    interval: float = 0.1,
+) -> None:
+    """后台协程：每 interval 秒检查一次进程树总内存。"""
+    try:
+        proc = psutil.Process(pid)
+        while True:
+            try:
+                total_rss = _process_tree_rss(proc)
+                if total_rss > memory_limit_bytes:
+                    logger.warning(
+                        "内存超限: PID=%d RSS=%d MB 限制=%d MB",
+                        pid,
+                        total_rss // (1024 * 1024),
+                        memory_limit_bytes // (1024 * 1024),
+                    )
+                    oom_event.set()
+                    _kill_process_tree(pid)
+                    return
+            except (psutil.NoSuchProcess, ProcessLookupError):
+                # 进程已正常退出
+                return
+            await asyncio.sleep(interval)
+    except (psutil.NoSuchProcess, ProcessLookupError):
+        pass
+
+
+def _process_tree_rss(root: psutil.Process) -> int:
+    """计算进程树的总 RSS（物理内存）。"""
+    try:
+        total = root.memory_info().rss
+        for child in root.children(recursive=True):
+            try:
+                total += child.memory_info().rss
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+        return total
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        return 0
+
+
+def _kill_process_tree(pid: int) -> None:
+    """递归杀死进程树。"""
+    try:
+        parent = psutil.Process(pid)
+        for child in parent.children(recursive=True):
+            try:
+                child.kill()
+            except psutil.NoSuchProcess:
+                pass
+        parent.kill()
+    except psutil.NoSuchProcess:
+        pass
+
+
+def _make_preexec_fn(time_limit_sec: float, memory_limit_bytes: int):
+    """Unix: 返回一个 preexec_fn 用于设置子进程资源限制。"""
+    if os.name == "nt":
+        return None  # Windows 不支持 preexec_fn
+
+    def _set_limits():
+        import resource
+        try:
+            # 虚拟内存限制
+            resource.setrlimit(resource.RLIMIT_AS, (memory_limit_bytes, memory_limit_bytes))
+        except (ValueError, resource.error) as e:
+            logger.debug("RLIMIT_AS 设置失败: %s", e)
+
+        try:
+            # CPU 时间硬限制
+            cpu_limit = int(time_limit_sec) + 5
+            resource.setrlimit(resource.RLIMIT_CPU, (cpu_limit, cpu_limit))
+        except (ValueError, resource.error) as e:
+            logger.debug("RLIMIT_CPU 设置失败: %s", e)
+
+        try:
+            # 限制子进程数，防止 fork 炸弹
+            resource.setrlimit(resource.RLIMIT_NPROC, (64, 64))
+        except (ValueError, resource.error, AttributeError):
+            pass
+
+        try:
+            # 限制文件大小 (防止写满磁盘)
+            resource.setrlimit(resource.RLIMIT_FSIZE, (64 * 1024 * 1024, 64 * 1024 * 1024))
+        except (ValueError, resource.error):
+            pass
+
+    return _set_limits
