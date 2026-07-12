@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     JWT_EXPIRE_HOURS: int = 24
 
     # 判题引擎 — 并行判题 worker 数量
-    JUDGE_WORKERS: int = 3
-    JUDGE_POLL_INTERVAL: float = 0.5    # 轮询间隔(秒)
+    JUDGE_WORKERS: int = 8            # 200人并发建议 ≥8
+    JUDGE_POLL_INTERVAL: float = 0.3  # 轮询间隔(秒)
     COMPILE_TIME_LIMIT: int = 30
     SOURCE_SIZE_LIMIT: int = 256 * 1024
     OUTPUT_SIZE_LIMIT: int = 8 * 1024 * 1024
@@ -34,10 +34,10 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "chenjingbo"
     ADMIN_PASSWORD: str = "880730"
 
-    # 运行模式
-    PRODUCTION: bool = False
+    # 运行模式 (生产环境已开启)
+    PRODUCTION: bool = True
     LOG_LEVEL: str = "INFO"
-    LOG_FILE: str = ""  # 留空则只输出到控制台
+    LOG_FILE: str = "server.log"
 
     # Docker 沙箱 (生产环境推荐开启)
     USE_DOCKER_SANDBOX: bool = False  # 启用 Docker 容器隔离执行
