@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     SCOREBOARD_CACHE_TTL: int = 5
 
     # 管理员默认凭据 (生产环境请通过 .env 修改)
-    ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = ""
+    ADMIN_USERNAME: str = "chenjingbo"
+    ADMIN_PASSWORD: str = "880730"
 
     # 运行模式
     PRODUCTION: bool = False
