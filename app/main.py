@@ -149,7 +149,7 @@ async def judge_websocket(websocket):
         unsubscribe(queue)
 
 
-# 构建中间件栈（Starlette 0.37+ 必须手动调用）
-app.middleware_stack = app.build_middleware_stack()
+# 构建中间件栈 — 直接用 router，跳过 ServerErrorMiddleware
+app.middleware_stack = app.router
 
 
