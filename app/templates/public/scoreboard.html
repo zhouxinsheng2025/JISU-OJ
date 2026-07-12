@@ -1,125 +1,140 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if contest %}{{ contest.title }} - {% endif %}计分板 | JISU裁判系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0f1a;
+            --bg-secondary: #111827;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border: #1e293b;
+        }
+        body { background: var(--bg-primary); color: var(--text-primary); }
+        @keyframes pulse-green {
+            0%, 100% { background-color: rgba(34, 197, 94, 0.12); }
+            50% { background-color: rgba(34, 197, 94, 0.28); }
+        }
+        .ac-cell { animation: pulse-green 3s ease-in-out infinite; }
+    </style>
 </head>
-<body class="min-h-screen bg-gray-900 text-gray-100">
-    <main class="max-w-6xl mx-auto p-6">
-        {% if contest %}
-        <div class="mb-6 text-center">
-            <h1 class="text-2xl font-bold">{{ contest.title }} - 计分板</h1>
-            <p class="text-gray-400 text-sm mt-1">
-                <span id="status">实时更新中</span>
-                {% if freeze %}
-                <span class="text-yellow-400 ml-2">&#x26A0; 已封榜</span>
-                {% endif %}
-            </p>
+<body class="min-h-screen p-6">
+    {% if contest %}
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold mb-3">{{ contest.title }}</h1>
+            <div class="flex items-center justify-center gap-6 text-sm">
+                <span class="text-[var(--text-secondary)]">
+                    {{ contest.start_time.strftime('%Y-%m-%d %H:%M') }} ~ {{ contest.end_time.strftime('%Y-%m-%d %H:%M') }}
+                </span>
+                <span id="clock" class="font-mono text-xl text-[var(--accent)] tabular-nums"></span>
+            </div>
+            {% if freeze %}
+            <div class="mt-3 inline-flex items-center gap-1 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-4 py-1.5 rounded-full text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                已封榜
+            </div>
+            {% endif %}
         </div>
 
-        <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
-            <table class="w-full text-left">
-                <thead class="bg-gray-700 text-gray-300">
-                    <tr>
-                        <th class="px-3 py-3 w-12 text-center">#</th>
-                        <th class="px-3 py-3">队伍</th>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-[var(--border)] text-[var(--text-secondary)] text-xs uppercase tracking-wider">
+                        <th class="px-3 py-4 text-center w-12 font-medium">#</th>
+                        <th class="px-4 py-4 text-left font-medium">队伍</th>
                         {% for problem in problems %}
-                        <th class="px-2 py-3 text-center font-mono text-sm">{{ problem.title|truncate(10, True, '..') }}</th>
+                        <th class="px-2 py-4 text-center font-mono font-medium" title="{{ problem.title }}">{{ problem.title[:10] }}</th>
                         {% endfor %}
-                        <th class="px-3 py-3 text-center">解题数</th>
-                        <th class="px-3 py-3 text-center">罚时/总分</th>
+                        <th class="px-3 py-4 text-center font-medium">解题</th>
+                        <th class="px-4 py-4 text-center font-medium">罚时</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-700 font-mono text-sm">
+                <tbody>
                     {% for item in board %}
-                    <tr class="hover:bg-gray-750 transition">
-                        <td class="px-3 py-2 text-center text-gray-400">{{ loop.index }}</td>
-                        <td class="px-3 py-2 font-semibold">{{ item.teamname }}</td>
+                    <tr class="border-b border-[var(--border)] hover:bg-white/[0.02] transition-colors">
+                        <td class="px-3 py-3.5 text-center text-[var(--text-muted)] font-mono">{{ loop.index }}</td>
+                        <td class="px-4 py-3.5 font-semibold">{{ item.teamname }}</td>
                         {% for problem in problems %}
                         {% set cache = item.problems.get(problem.id) %}
-                        <td class="px-2 py-2 text-center">
+                        <td class="px-2 py-3.5 text-center font-mono text-xs">
                             {% if cache and cache.is_correct %}
-                            <span class="text-green-400 font-bold" title="AC ({{ cache.submissions }} 次提交, {{ cache.total_time }} 罚时)">
+                            <span class="ac-cell inline-flex items-center justify-center w-10 h-8 rounded font-bold text-[var(--success)]">
                                 +{% if cache.submissions > 1 %}{{ cache.submissions - 1 }}{% endif %}
                             </span>
                             {% elif cache and not cache.is_correct %}
-                            <span class="text-red-400" title="WA ({{ cache.submissions }} 次提交)">-{{ cache.submissions }}</span>
+                            <span class="text-[var(--danger)]">-{{ cache.submissions }}</span>
                             {% else %}
-                            <span class="text-gray-600">.</span>
+                            <span class="text-gray-700">.</span>
                             {% endif %}
                         </td>
                         {% endfor %}
-                        <td class="px-3 py-2 text-center font-bold text-blue-300">{{ item.solved }}</td>
-                        <td class="px-3 py-2 text-center text-gray-300">
-                            {% if contest.score_mode == "ioi" %}
-                            {{ item.total_score }}
-                            {% else %}
-                            {{ item.total_time }}
-                            {% endif %}
+                        <td class="px-3 py-3.5 text-center font-bold text-[var(--accent)] font-mono">{{ item.solved }}</td>
+                        <td class="px-4 py-3.5 text-center font-mono text-sm text-[var(--text-secondary)]">
+                            {{ item.total_time if contest.score_mode != 'ioi' else item.total_score }}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="{{ 3 + problems|length }}" class="px-4 py-12 text-center text-gray-500">
-                            <div class="text-4xl mb-2">/</div>
-                            <div>暂无排名数据</div>
+                        <td colspan="{{ 4 + problems|length }}" class="px-4 py-24 text-center text-[var(--text-muted)]">
+                            <div class="text-5xl mb-4 text-gray-700">/</div>
+                            <p class="text-lg">暂无排名数据</p>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        {% else %}
-        <div class="text-center py-20">
-            <div class="text-6xl mb-4 text-gray-600">/</div>
-            <h1 class="text-2xl font-bold text-gray-400 mb-2">暂无进行中的比赛</h1>
-            <p class="text-gray-500">请等待比赛开始或联系管理员</p>
+
+        <div class="text-center mt-6 text-xs text-[var(--text-muted)]">
+            <span id="ws-status">实时更新中</span>
         </div>
-        {% endif %}
-    </main>
+    </div>
 
     <script>
-    // WebSocket 实时更新计分板 — 公开大屏展示
+    function updateClock() {
+        document.getElementById('clock').textContent = new Date().toLocaleTimeString('zh-CN', {hour12: false});
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
     (function() {
-        var statusEl = document.getElementById('status');
+        var statusEl = document.getElementById('ws-status');
         var reloadTimer = null;
-
-        function refresh() {
-            statusEl.textContent = '正在刷新...';
-            location.reload();
-        }
-
-        // 兜底：每 60 秒强制刷新
+        function refresh() { location.reload(); }
         setInterval(refresh, 60000);
-
         try {
             var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
             var ws = new WebSocket(proto + '//' + location.host + '/ws/judge-updates');
-            ws.onopen = function() {
-                statusEl.textContent = '实时更新中';
-            };
+            ws.onopen = function() { statusEl.textContent = '实时更新中'; };
             ws.onmessage = function(event) {
-                try {
-                    var data = JSON.parse(event.data);
-                    if (data.type === 'judging_done') {
-                        if (reloadTimer) clearTimeout(reloadTimer);
-                        reloadTimer = setTimeout(refresh, 1500);
-                    }
-                } catch(e) {}
+                var data = JSON.parse(event.data);
+                if (data.type === 'judging_done') {
+                    if (reloadTimer) clearTimeout(reloadTimer);
+                    reloadTimer = setTimeout(refresh, 1500);
+                }
             };
-            ws.onclose = function() {
-                statusEl.textContent = '连接断开，60秒后刷新';
-                setTimeout(refresh, 5000);
-            };
-            ws.onerror = function() {
-                statusEl.textContent = '轮询模式 (60s)';
-            };
-        } catch(e) {
-            statusEl.textContent = '轮询模式 (60s)';
-        }
+            ws.onclose = function() { statusEl.textContent = '连接断开'; };
+        } catch(e) { statusEl.textContent = '轮询模式'; }
     })();
     </script>
+
+    {% else %}
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="text-center">
+            <div class="text-6xl mb-4 text-gray-700">/</div>
+            <h1 class="text-2xl font-bold text-gray-500 mb-2">暂无进行中的比赛</h1>
+            <p class="text-gray-600">请等待比赛开始</p>
+        </div>
+    </div>
+    {% endif %}
 </body>
 </html>
