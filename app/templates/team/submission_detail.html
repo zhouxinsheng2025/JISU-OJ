@@ -174,8 +174,18 @@
         </div>
     </div>
     {% elif submission.state == "done" and judging and not runs %}
-    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
-        <p class="text-[var(--text-muted)] text-sm">判题已完成但暂无测试点详情。可能为系统内部错误，请联系管理员。</p>
+    <div class="bg-[var(--bg-card)] border border-orange-500/30 rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-orange-400 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+            判题异常
+        </h2>
+        <p class="text-[var(--text-muted)] text-sm">
+            {% if judging.result == "RTE" %}
+            系统内部错误，无法完成判题。可能原因：题目不存在、测试数据未配置、或判题引擎异常。
+            {% else %}
+            判题已完成但暂无测试点详情。可能为系统内部错误，请联系管理员。
+            {% endif %}
+        </p>
     </div>
     {% endif %}
 

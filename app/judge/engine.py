@@ -65,11 +65,40 @@ async def start_judge_engine():
     logger.info("%d 个判题 worker 已启动", settings.JUDGE_WORKERS)
 
 
+async def _recover_stuck_submissions():
+    """恢复卡死在 JUDGING 状态的提交（worker 崩溃后残留）。"""
+    try:
+        async with async_session() as db:
+            result = await db.execute(
+                select(Submission.id)
+                .where(Submission.state == SubmissionState.JUDGING)
+                .limit(10)
+            )
+            stuck = list(result.scalars().all())
+            if stuck:
+                logger.warning("发现 %d 个卡死的提交，重置为 QUEUED", len(stuck))
+                for sid in stuck:
+                    await db.execute(
+                        update(Submission)
+                        .where(Submission.id == sid)
+                        .values(state=SubmissionState.QUEUED)
+                    )
+                await db.commit()
+    except Exception as e:
+        logger.error("恢复卡死提交失败: %s", e)
+
+
 async def judge_worker(worker_id: int):
     """判题 worker — 独立轮询，原子认领提交"""
     logger.info("Worker-%d 启动", worker_id)
+    poll_count = 0
     while True:
         try:
+            # 每 10 次轮询（约 5 秒）检查一次卡死的提交
+            poll_count += 1
+            if poll_count % 10 == 0:
+                await _recover_stuck_submissions()
+
             submission_id = await _claim_submission(worker_id)
             if submission_id:
                 await _judge_submission(submission_id, worker_id)
@@ -156,6 +185,14 @@ async def _judge_submission(submission_id: int, worker_id: int):
         problem = problem_result.scalar_one_or_none()
         if problem is None:
             logger.error("Judge: problem not found for submission %d", submission_id)
+            judging = Judging(
+                submission_id=submission.id,
+                result=Verdict.RTE,
+                score=0.0,
+                started=datetime.utcnow(),
+                ended=datetime.utcnow(),
+            )
+            db.add(judging)
             submission.state = SubmissionState.DONE
             await db.commit()
             return
@@ -167,6 +204,21 @@ async def _judge_submission(submission_id: int, worker_id: int):
         )
         testcases = list(tc_result.scalars().all())
         logger.debug("Judge: %d testcases for problem %d", len(testcases), submission.problem_id)
+
+        # 题目无测试数据 — 无法判题
+        if len(testcases) == 0:
+            logger.warning("Judge: no testcases for problem %d, submission=%d", submission.problem_id, submission_id)
+            judging = Judging(
+                submission_id=submission.id,
+                result=Verdict.RTE,
+                score=0.0,
+                started=datetime.utcnow(),
+                ended=datetime.utcnow(),
+            )
+            db.add(judging)
+            submission.state = SubmissionState.DONE
+            await db.commit()
+            return
 
         contest_result = await db.execute(
             select(Contest).where(Contest.id == submission.contest_id)
