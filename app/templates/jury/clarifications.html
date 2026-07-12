@@ -1,82 +1,79 @@
 {% extends "base.html" %}
 {% block title %}问答管理 - 澄清系统{% endblock %}
-{% block nav %}
-<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
-<a href="/jury/bank" class="hover:text-blue-400">题库</a>
-<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
-<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
-<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
-<a href="/jury/clarifications" class="text-blue-400 font-semibold">问答</a>
-<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% block sidebar %}
+{% set active = 'clarifications' %}
+{% include 'jury/_sidebar.html' %}
 {% endblock %}
+{% block breadcrumb %}<a href="/jury/" class="hover:text-[var(--text-primary)]">仪表盘</a> / 问答管理{% endblock %}
 {% block content %}
-<div class="max-w-5xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">问答管理</h1>
-        <div class="flex gap-2">
-            <form method="GET" action="/jury/clarifications">
-                <select name="contest_id" onchange="this.form.submit()"
-                        class="bg-gray-800 border border-gray-600 text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
-                    <option value="">全部比赛</option>
-                    {% for c in contests %}
-                    <option value="{{ c.id }}" {% if selected_contest_id == c.id %}selected{% endif %}>
-                        {{ c.title }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </form>
-        </div>
+<div class="max-w-5xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold">问答管理</h1>
+        <form method="GET" action="/jury/clarifications">
+            <select name="contest_id" onchange="this.form.submit()"
+                    class="bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50">
+                <option value="">全部比赛</option>
+                {% for c in contests %}
+                <option value="{{ c.id }}" {% if selected_contest_id == c.id %}selected{% endif %}>
+                    {{ c.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
     </div>
 
     {% if clarifications %}
     <div class="space-y-4">
         {% for clar in clarifications %}
         {% set sender = users_map.get(clar.sender_id) %}
-        <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-700 bg-gray-850">
+        <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-[var(--border)]">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <span class="text-sm font-semibold text-blue-400">{{ sender.teamname or sender.username if sender else '未知' }}</span>
-                        <span class="text-xs text-gray-500">{{ clar.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <span class="text-sm font-semibold text-[var(--accent)]">{{ sender.teamname or sender.username if sender else '未知' }}</span>
+                        <span class="text-xs text-[var(--text-muted)]">{{ clar.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
                         {% if clar.answer %}
-                        <span class="text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded">已回复</span>
+                        <span class="text-xs bg-[var(--success)]/10 text-[var(--success)] px-2 py-0.5 rounded font-medium">已回复</span>
                         {% else %}
-                        <span class="text-xs bg-yellow-900 text-yellow-300 px-2 py-0.5 rounded">待回复</span>
+                        <span class="text-xs bg-[var(--warning)]/10 text-[var(--warning)] px-2 py-0.5 rounded font-medium">待回复</span>
                         {% endif %}
                     </div>
-                    <div class="text-xs text-gray-500">#{{ clar.id }}</div>
+                    <div class="text-xs text-[var(--text-muted)]">#{{ clar.id }}</div>
                 </div>
             </div>
-            <div class="px-6 py-4">
-                <div class="mb-2">
-                    <span class="text-xs text-gray-500 mr-2 font-bold">Q:</span>
-                    <span class="text-white whitespace-pre-wrap">{{ clar.question }}</span>
+            <div class="px-5 py-4 space-y-3">
+                <div class="flex gap-3">
+                    <span class="text-xs text-[var(--text-muted)] font-bold shrink-0 mt-0.5">Q:</span>
+                    <span class="text-[var(--text-primary)] whitespace-pre-wrap text-sm">{{ clar.question }}</span>
                 </div>
 
                 {% if clar.answer %}
-                <div class="mb-2">
-                    <span class="text-xs text-gray-500 mr-2 font-bold">A:</span>
-                    <span class="text-green-300 whitespace-pre-wrap">{{ clar.answer }}</span>
+                <div class="flex gap-3">
+                    <span class="text-xs text-[var(--text-muted)] font-bold shrink-0 mt-0.5">A:</span>
+                    <span class="text-[var(--success)] whitespace-pre-wrap text-sm">{{ clar.answer }}</span>
                 </div>
-                <div class="text-xs text-gray-500">
+                <div class="text-xs text-[var(--text-muted)] pl-7">
                     {% set replier = users_map.get(clar.recipient_id) %}
                     回复人: {{ replier.teamname or replier.username if replier else '裁判' }}
                 </div>
                 {% else %}
-                <details class="mt-3">
-                    <summary class="text-blue-400 hover:text-blue-300 cursor-pointer text-sm font-medium">回复此问题</summary>
+                <details class="mt-2">
+                    <summary class="text-[var(--accent)] hover:text-[var(--accent-hover)] cursor-pointer text-sm font-medium inline-flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        回复此问题
+                    </summary>
                     <form method="POST" action="/jury/clarifications/{{ clar.id }}/reply" class="mt-3 space-y-3">
                         <textarea name="answer" rows="3" required
-                                  class="w-full bg-gray-900 border border-gray-600 rounded px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                                  class="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
                                   placeholder="输入回复内容..."></textarea>
                         <div class="flex items-center gap-4">
-                            <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                            <label class="flex items-center gap-2 text-sm text-[var(--text-muted)] cursor-pointer">
                                 <input type="checkbox" name="make_public" value="1"
-                                       class="bg-gray-700 border-gray-500 rounded">
+                                       class="rounded border-[var(--border)] bg-[var(--bg-primary)] text-[var(--accent)] focus:ring-[var(--accent)]/50">
                                 回复所有人可见（公开）
                             </label>
                             <button type="submit"
-                                    class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded text-sm font-semibold transition">
+                                    class="bg-[var(--success)] hover:opacity-90 text-white text-sm px-5 py-2 rounded-lg font-medium transition">
                                 提交回复
                             </button>
                         </div>
@@ -88,9 +85,12 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="bg-gray-800 rounded-lg p-12 border border-gray-700 text-center">
-        <p class="text-gray-500 text-lg mb-2">暂无问答记录</p>
-        <p class="text-gray-600 text-sm">等待参赛队伍提交问题</p>
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-12 text-center">
+        <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--bg-hover)] flex items-center justify-center">
+            <svg class="w-6 h-6 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+        </div>
+        <p class="text-[var(--text-muted)] text-sm">暂无问答记录</p>
+        <p class="text-xs text-[var(--text-muted)] mt-1">等待参赛队伍提交问题</p>
     </div>
     {% endif %}
 </div>

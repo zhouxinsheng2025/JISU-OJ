@@ -1,74 +1,85 @@
 {% extends "base.html" %}
 {% block title %}裁判后台 - 队伍管理{% endblock %}
-{% block nav %}
-<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
-<a href="/jury/bank" class="hover:text-blue-400">题库</a>
-<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
-<a href="/jury/teams" class="text-blue-400 font-semibold">队伍</a>
-<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
-<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
-<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% block sidebar %}
+{% set active = 'teams' %}
+{% include 'jury/_sidebar.html' %}
 {% endblock %}
+{% block breadcrumb %}<a href="/jury/" class="hover:text-[var(--text-primary)]">仪表盘</a> / 队伍管理{% endblock %}
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">队伍管理</h1>
-    <div class="flex gap-2">
-        <a href="/jury/teams/new" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-            + 新建队伍
+<div class="max-w-5xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold">队伍管理</h1>
+        <a href="/jury/teams/new" class="inline-flex items-center gap-1.5 bg-[var(--accent)] hover:opacity-90 text-white text-sm px-4 py-2 rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            新建队伍
         </a>
     </div>
-</div>
 
-<!-- CSV批量导入 -->
-<details class="bg-gray-800 rounded-lg p-4 mb-6 border border-blue-500/30">
-    <summary class="cursor-pointer text-blue-400 hover:text-blue-300 font-semibold">导入CSV批量创建队伍</summary>
-    <div class="mt-4">
-        <p class="text-gray-400 text-sm mb-2">CSV格式：<code class="text-yellow-400">username,password,teamname</code>，每行一个队伍</p>
-        <form method="post" enctype="multipart/form-data" action="/jury/teams/csv" class="flex items-center gap-3">
-            <input type="file" name="csvfile" accept=".csv,.txt" required
-                   class="text-sm text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-blue-600 file:text-white file:border-0 file:text-sm hover:file:bg-blue-700 file:cursor-pointer">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm">导入</button>
-        </form>
-    </div>
-</details>
+    <!-- CSV Import -->
+    <details class="bg-[var(--bg-card)] border border-[var(--accent)]/30 rounded-xl overflow-hidden">
+        <summary class="px-5 py-3.5 cursor-pointer hover:bg-[var(--bg-hover)] text-[var(--accent)] text-sm font-medium flex items-center gap-2 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+            导入CSV批量创建队伍
+        </summary>
+        <div class="px-5 py-4 border-t border-[var(--border)]">
+            <p class="text-xs text-[var(--text-muted)] mb-3">CSV格式：<code class="text-[var(--warning)]">username,password,teamname</code>，每行一个队伍</p>
+            <form method="post" enctype="multipart/form-data" action="/jury/teams/csv" class="flex items-center gap-3">
+                <input type="file" name="csvfile" accept=".csv,.txt" required
+                       class="text-sm text-[var(--text-primary)] file:mr-3 file:py-1.5 file:px-4 file:rounded-lg file:bg-[var(--accent)] file:text-white file:border-0 file:text-xs hover:file:opacity-90 file:cursor-pointer file:transition">
+                <button type="submit" class="bg-[var(--accent)] hover:opacity-90 text-white text-xs px-4 py-1.5 rounded-lg transition">导入</button>
+            </form>
+        </div>
+    </details>
 
-<div class="bg-gray-800 rounded-lg overflow-hidden">
-    <table class="w-full text-left">
-        <thead class="bg-gray-700 text-gray-300">
-            <tr>
-                <th class="px-4 py-3">#</th>
-                <th class="px-4 py-3">用户名</th>
-                <th class="px-4 py-3">队伍名</th>
-                <th class="px-4 py-3">状态</th>
-                <th class="px-4 py-3">操作</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-700">
-            {% for team in teams %}
-            <tr class="hover:bg-gray-750">
-                <td class="px-4 py-3">{{ team.id }}</td>
-                <td class="px-4 py-3">{{ team.username }}</td>
-                <td class="px-4 py-3">{{ team.teamname }}</td>
-                <td class="px-4 py-3">
-                    {% if team.enabled %}
-                    <span class="text-green-400">启用</span>
+    <!-- Team Table -->
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-[var(--bg-primary)] text-[var(--text-muted)] text-left">
+                        <th class="px-4 py-3 font-medium">#</th>
+                        <th class="px-4 py-3 font-medium">用户名</th>
+                        <th class="px-4 py-3 font-medium">队伍名</th>
+                        <th class="px-4 py-3 font-medium">状态</th>
+                        <th class="px-4 py-3 font-medium">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[var(--border)]">
+                    {% for team in teams %}
+                    <tr class="hover:bg-[var(--bg-hover)] transition-colors">
+                        <td class="px-4 py-3 text-[var(--text-muted)] font-mono text-xs">{{ team.id }}</td>
+                        <td class="px-4 py-3 text-[var(--text-primary)]">{{ team.username }}</td>
+                        <td class="px-4 py-3 text-[var(--text-primary)] font-medium">{{ team.teamname }}</td>
+                        <td class="px-4 py-3">
+                            {% if team.enabled %}
+                            <span class="text-[var(--success)] bg-[var(--success)]/10 px-2 py-0.5 rounded text-xs font-medium">启用</span>
+                            {% else %}
+                            <span class="text-[var(--danger)] bg-[var(--danger)]/10 px-2 py-0.5 rounded text-xs font-medium">禁用</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <a href="/jury/teams/{{ team.id }}/edit" class="text-[var(--accent)] hover:underline text-xs">编辑</a>
+                                <form method="post" action="/jury/teams/{{ team.id }}/delete" class="inline" onsubmit="return confirm('确定删除该队伍？')">
+                                    <button type="submit" class="text-[var(--danger)] hover:underline text-xs">删除</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
                     {% else %}
-                    <span class="text-red-400">禁用</span>
-                    {% endif %}
-                </td>
-                <td class="px-4 py-3 flex gap-2">
-                    <a href="/jury/teams/{{ team.id }}/edit" class="text-blue-400 hover:underline">编辑</a>
-                    <form method="post" action="/jury/teams/{{ team.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除该队伍？')">
-                        <button type="submit" class="text-red-400 hover:underline">删除</button>
-                    </form>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" class="px-4 py-8 text-center text-gray-500">暂无队伍</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    <tr>
+                        <td colspan="5" class="px-4 py-16 text-center text-[var(--text-muted)]">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--bg-hover)] flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </div>
+                            <p>暂无队伍</p>
+                            <a href="/jury/teams/new" class="text-[var(--accent)] hover:underline text-sm mt-2 inline-block">创建第一个队伍</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

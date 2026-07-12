@@ -1,92 +1,104 @@
 {% extends "base.html" %}
 {% block title %}裁判后台 - 题库{% endblock %}
-{% block nav %}
-<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
-<a href="/jury/bank" class="text-blue-400 font-semibold">题库</a>
-<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
-<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
-<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
-<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
-<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% block sidebar %}
+{% set active = 'bank' %}
+{% include 'jury/_sidebar.html' %}
 {% endblock %}
+{% block breadcrumb %}<a href="/jury/" class="hover:text-[var(--text-primary)]">仪表盘</a> / 题库{% endblock %}
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">题库</h1>
-    <div class="flex gap-2">
-        <a href="/jury/bank/new" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm">+ 新建题目</a>
-        <form method="post" enctype="multipart/form-data" action="/jury/bank/import-luogu" class="inline-flex">
-            <label class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition text-sm cursor-pointer">
-                📦 导入洛谷题目
-                <input type="file" name="zipfile" accept=".zip" class="hidden" onchange="this.form.submit()">
-            </label>
-        </form>
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold">题库</h1>
+        <div class="flex gap-2">
+            <a href="/jury/bank/new" class="inline-flex items-center gap-1.5 bg-[var(--accent)] hover:opacity-90 text-white text-sm px-4 py-2 rounded-lg transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                新建题目
+            </a>
+            <form method="post" enctype="multipart/form-data" action="/jury/bank/import-luogu" class="inline-flex">
+                <label class="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2 rounded-lg transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+                    导入洛谷
+                    <input type="file" name="zipfile" accept=".zip" class="hidden" onchange="this.form.submit()">
+                </label>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- 筛选 -->
-<form method="get" action="/jury/bank" class="flex gap-4 mb-6 bg-gray-800 p-4 rounded-lg">
-    <select name="difficulty" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white">
-        <option value="">全部难度</option>
-        <option value="easy" {% if filter_difficulty == 'easy' %}selected{% endif %}>简单</option>
-        <option value="medium" {% if filter_difficulty == 'medium' %}selected{% endif %}>中等</option>
-        <option value="hard" {% if filter_difficulty == 'hard' %}selected{% endif %}>困难</option>
-    </select>
-    <input type="text" name="tag" placeholder="标签筛选" value="{{ filter_tag }}"
-           class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white flex-1">
-    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">筛选</button>
-    <a href="/jury/bank" class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg">重置</a>
-</form>
+    <!-- Filter Bar -->
+    <form method="get" action="/jury/bank" class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 flex flex-wrap items-center gap-3">
+        <select name="difficulty" class="bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50">
+            <option value="">全部难度</option>
+            <option value="easy" {% if filter_difficulty == 'easy' %}selected{% endif %}>简单</option>
+            <option value="medium" {% if filter_difficulty == 'medium' %}selected{% endif %}>中等</option>
+            <option value="hard" {% if filter_difficulty == 'hard' %}selected{% endif %}>困难</option>
+        </select>
+        <input type="text" name="tag" placeholder="标签筛选" value="{{ filter_tag }}"
+               class="flex-1 min-w-[160px] bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50">
+        <button type="submit" class="bg-[var(--accent)] hover:opacity-90 text-white text-sm px-4 py-2 rounded-lg transition">筛选</button>
+        <a href="/jury/bank" class="bg-[var(--bg-hover)] hover:bg-[var(--border)] text-[var(--text-secondary)] text-sm px-4 py-2 rounded-lg transition">重置</a>
+    </form>
 
-<div class="bg-gray-800 rounded-lg overflow-hidden">
-    <table class="w-full text-left">
-        <thead class="bg-gray-700 text-gray-300">
-            <tr>
-                <th class="px-4 py-3">PID</th>
-                <th class="px-4 py-3">标题</th>
-                <th class="px-4 py-3">难度</th>
-                <th class="px-4 py-3">标签</th>
-                <th class="px-4 py-3">时间限制</th>
-                <th class="px-4 py-3">内存限制</th>
-                <th class="px-4 py-3">操作</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-700">
-            {% for problem in problems %}
-            <tr class="hover:bg-gray-750">
-                <td class="px-4 py-3 text-gray-400 font-mono">{{ problem.pid }}</td>
-                <td class="px-4 py-3">{{ problem.title }}</td>
-                <td class="px-4 py-3">
-                    {% if problem.difficulty.value == "easy" %}
-                    <span class="text-green-400 bg-green-400/10 px-2 py-0.5 rounded text-xs">简单</span>
-                    {% elif problem.difficulty.value == "medium" %}
-                    <span class="text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded text-xs">中等</span>
+    <!-- Problem Table -->
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-[var(--bg-primary)] text-[var(--text-muted)] text-left">
+                        <th class="px-4 py-3 font-medium">PID</th>
+                        <th class="px-4 py-3 font-medium">标题</th>
+                        <th class="px-4 py-3 font-medium">难度</th>
+                        <th class="px-4 py-3 font-medium">标签</th>
+                        <th class="px-4 py-3 font-medium">时间限制</th>
+                        <th class="px-4 py-3 font-medium">内存限制</th>
+                        <th class="px-4 py-3 font-medium">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[var(--border)]">
+                    {% for problem in problems %}
+                    <tr class="hover:bg-[var(--bg-hover)] transition-colors">
+                        <td class="px-4 py-3 text-[var(--text-muted)] font-mono text-xs">{{ problem.pid }}</td>
+                        <td class="px-4 py-3 text-[var(--text-primary)] font-medium">{{ problem.title }}</td>
+                        <td class="px-4 py-3">
+                            {% if problem.difficulty.value == "easy" %}
+                            <span class="text-[var(--success)] bg-[var(--success)]/10 px-2 py-0.5 rounded text-xs font-medium">简单</span>
+                            {% elif problem.difficulty.value == "medium" %}
+                            <span class="text-[var(--warning)] bg-[var(--warning)]/10 px-2 py-0.5 rounded text-xs font-medium">中等</span>
+                            {% else %}
+                            <span class="text-[var(--danger)] bg-[var(--danger)]/10 px-2 py-0.5 rounded text-xs font-medium">困难</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if problem.tags %}
+                                {% for tag in problem.tags.split(',') %}
+                                <span class="inline-block bg-[var(--bg-hover)] text-[var(--text-muted)] px-2 py-0.5 rounded text-xs mr-1">{{ tag.strip() }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-[var(--text-secondary)] font-mono text-xs">{{ problem.time_limit }}s</td>
+                        <td class="px-4 py-3 text-[var(--text-secondary)] font-mono text-xs">{{ problem.memory_limit }} MB</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <a href="/jury/bank/{{ problem.id }}/edit" class="text-[var(--accent)] hover:underline text-xs">编辑</a>
+                                <a href="/jury/problems/{{ problem.id }}/testcases" class="text-[var(--success)] hover:underline text-xs">测试数据</a>
+                                <form method="post" action="/jury/bank/{{ problem.id }}/delete" onsubmit="return confirm('确定删除该题目?')" class="inline">
+                                    <button type="submit" class="text-[var(--danger)] hover:underline text-xs">删除</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
                     {% else %}
-                    <span class="text-red-400 bg-red-400/10 px-2 py-0.5 rounded text-xs">困难</span>
-                    {% endif %}
-                </td>
-                <td class="px-4 py-3 text-gray-400 text-sm">
-                    {% if problem.tags %}
-                        {% for tag in problem.tags.split(',') %}
-                        <span class="bg-gray-700 px-2 py-0.5 rounded text-xs mr-1">{{ tag.strip() }}</span>
-                        {% endfor %}
-                    {% endif %}
-                </td>
-                <td class="px-4 py-3">{{ problem.time_limit }}s</td>
-                <td class="px-4 py-3">{{ problem.memory_limit }} MB</td>
-                <td class="px-4 py-3 flex gap-2">
-                    <a href="/jury/bank/{{ problem.id }}/edit" class="text-blue-400 hover:underline">编辑</a>
-                    <a href="/jury/problems/{{ problem.id }}/testcases" class="text-green-400 hover:underline">测试数据</a>
-                    <form method="post" action="/jury/bank/{{ problem.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除该题目?')">
-                        <button type="submit" class="text-red-400 hover:underline">删除</button>
-                    </form>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="7" class="px-4 py-8 text-center text-gray-500">暂无题目</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    <tr>
+                        <td colspan="7" class="px-4 py-16 text-center text-[var(--text-muted)]">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--bg-hover)] flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            </div>
+                            <p>暂无题目</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

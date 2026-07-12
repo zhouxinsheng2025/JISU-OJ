@@ -1,114 +1,129 @@
 {% extends "base.html" %}
 {% block title %}提交管理 - 裁判{% endblock %}
-{% block nav %}
-<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
-<a href="/jury/bank" class="hover:text-blue-400">题库</a>
-<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
-<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
-<a href="/jury/submissions" class="text-blue-400 font-semibold">提交</a>
-<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
-<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% block sidebar %}
+{% set active = 'submissions' %}
+{% include 'jury/_sidebar.html' %}
 {% endblock %}
+{% block breadcrumb %}<a href="/jury/" class="hover:text-[var(--text-primary)]">仪表盘</a> / 提交记录{% endblock %}
 {% block content %}
 <div class="max-w-6xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">所有提交记录</h1>
-        <span class="text-gray-400 text-sm">最近 100 条</span>
-    </div>
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+            <h1 class="text-lg font-semibold">所有提交记录</h1>
+            <span class="text-xs text-[var(--text-muted)]">最近 100 条</span>
+        </div>
 
-    {% if submission_data %}
-    <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="bg-gray-900 text-gray-400 text-left">
-                    <th class="px-4 py-3 font-medium">#</th>
-                    <th class="px-4 py-3 font-medium">时间</th>
-                    <th class="px-4 py-3 font-medium">队伍</th>
-                    <th class="px-4 py-3 font-medium">题目</th>
-                    <th class="px-4 py-3 font-medium">语言</th>
-                    <th class="px-4 py-3 font-medium">状态</th>
-                    <th class="px-4 py-3 font-medium">结果</th>
-                    <th class="px-4 py-3 font-medium">得分</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-700">
-                {% for item in submission_data %}
-                {% set sub = item.submission %}
-                {% set judging = item.judging %}
-                <tr class="hover:bg-gray-750 transition">
-                    <td class="px-4 py-3 text-gray-400 font-mono">
-                        <a href="/jury/submissions/{{ sub.id }}" class="text-blue-400 hover:text-blue-300">
-                            {{ sub.id }}
-                        </a>
-                    </td>
-                    <td class="px-4 py-3 text-gray-400 text-xs">
-                        {{ sub.submit_time.strftime('%Y-%m-%d %H:%M:%S') }}
-                    </td>
-                    <td class="px-4 py-3 font-medium">
-                        {{ sub.team.teamname if sub.team else '未知队伍' }}
-                    </td>
-                    <td class="px-4 py-3">
-                        {{ sub.problem.title if sub.problem else '未知题目' }}
-                    </td>
-                    <td class="px-4 py-3">
-                        <span class="text-gray-300 font-mono text-xs bg-gray-700 px-2 py-1 rounded">
-                            {{ sub.language }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3">
-                        {% if sub.state == "queued" %}
-                        <span class="text-yellow-400 font-medium">排队中</span>
-                        {% elif sub.state == "judging" %}
-                        <span class="text-blue-400 font-medium">判题中</span>
-                        {% elif sub.state == "done" %}
-                        <span class="text-green-400 font-medium">已完成</span>
-                        {% else %}
-                        <span class="text-gray-400">{{ sub.state }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-3">
-                        {% if judging and judging.result %}
-                            {% if judging.result == "AC" %}
-                            <span class="text-green-400 font-bold font-mono">AC</span>
-                            {% elif judging.result == "WA" %}
-                            <span class="text-red-400 font-bold font-mono">WA</span>
-                            {% elif judging.result == "TLE" %}
-                            <span class="text-yellow-400 font-bold font-mono">TLE</span>
-                            {% elif judging.result == "MLE" %}
-                            <span class="text-yellow-400 font-bold font-mono">MLE</span>
-                            {% elif judging.result == "RTE" %}
-                            <span class="text-orange-400 font-bold font-mono">RTE</span>
-                            {% elif judging.result == "CE" %}
-                            <span class="text-purple-400 font-bold font-mono">CE</span>
-                            {% elif judging.result == "OLE" %}
-                            <span class="text-pink-400 font-bold font-mono">OLE</span>
-                            {% elif judging.result == "PE" %}
-                            <span class="text-indigo-400 font-bold font-mono">PE</span>
+        {% if submission_data %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-[var(--bg-primary)] text-[var(--text-muted)] text-left">
+                        <th class="px-4 py-3 font-medium">#</th>
+                        <th class="px-4 py-3 font-medium">时间</th>
+                        <th class="px-4 py-3 font-medium">队伍</th>
+                        <th class="px-4 py-3 font-medium">题目</th>
+                        <th class="px-4 py-3 font-medium">语言</th>
+                        <th class="px-4 py-3 font-medium">状态</th>
+                        <th class="px-4 py-3 font-medium">结果</th>
+                        <th class="px-4 py-3 font-medium">得分</th>
+                        <th class="px-4 py-3 font-medium">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[var(--border)]">
+                    {% for item in submission_data %}
+                    {% set sub = item.submission %}
+                    {% set judging = item.judging %}
+                    <tr class="hover:bg-[var(--bg-hover)] transition-colors">
+                        <td class="px-4 py-3 text-[var(--text-muted)] font-mono text-xs">
+                            <a href="/jury/submissions/{{ sub.id }}" class="text-[var(--accent)] hover:underline">
+                                {{ sub.id }}
+                            </a>
+                        </td>
+                        <td class="px-4 py-3 text-[var(--text-muted)] text-xs whitespace-nowrap">
+                            {{ sub.submit_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </td>
+                        <td class="px-4 py-3 text-[var(--text-primary)] font-medium text-xs">
+                            {{ sub.team.teamname if sub.team else '未知队伍' }}
+                        </td>
+                        <td class="px-4 py-3 text-[var(--text-primary)] text-xs">
+                            <a href="/jury/submissions/{{ sub.id }}" class="hover:text-[var(--accent)] transition">
+                                {{ sub.problem.title if sub.problem else '未知题目' }}
+                            </a>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="inline-block bg-[var(--bg-hover)] text-[var(--text-secondary)] font-mono text-xs px-2 py-1 rounded">
+                                {{ sub.language }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if sub.state == "queued" %}
+                            <span class="text-[var(--warning)] font-medium text-xs">排队中</span>
+                            {% elif sub.state == "judging" %}
+                            <span class="text-[var(--accent)] font-medium text-xs">判题中</span>
+                            {% elif sub.state == "done" %}
+                            <span class="text-[var(--success)] font-medium text-xs">已完成</span>
                             {% else %}
-                            <span class="text-gray-400">{{ judging.result }}</span>
+                            <span class="text-[var(--text-muted)] text-xs">{{ sub.state }}</span>
                             {% endif %}
-                        {% else %}
-                        <span class="text-gray-500">-</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-3 font-mono">
-                        {% if judging and judging.score is not none %}
-                        <span class="text-white">{{ judging.score }}</span>
-                        {% else %}
-                        <span class="text-gray-500">-</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if judging and judging.result %}
+                                {% if judging.result == "AC" %}
+                                <span class="inline-flex items-center gap-1 text-[var(--success)] font-bold font-mono text-xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    AC
+                                </span>
+                                {% elif judging.result == "WA" %}
+                                <span class="text-[var(--danger)] font-bold font-mono text-xs">WA</span>
+                                {% elif judging.result == "TLE" %}
+                                <span class="text-[var(--warning)] font-bold font-mono text-xs">TLE</span>
+                                {% elif judging.result == "MLE" %}
+                                <span class="text-[var(--warning)] font-bold font-mono text-xs">MLE</span>
+                                {% elif judging.result == "RTE" %}
+                                <span class="text-orange-400 font-bold font-mono text-xs">RTE</span>
+                                {% elif judging.result == "CE" %}
+                                <span class="text-purple-400 font-bold font-mono text-xs">CE</span>
+                                {% elif judging.result == "OLE" %}
+                                <span class="text-pink-400 font-bold font-mono text-xs">OLE</span>
+                                {% elif judging.result == "PE" %}
+                                <span class="text-indigo-400 font-bold font-mono text-xs">PE</span>
+                                {% else %}
+                                <span class="text-[var(--text-muted)] text-xs">{{ judging.result }}</span>
+                                {% endif %}
+                            {% else %}
+                            <span class="text-[var(--text-muted)] text-xs">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 font-mono text-xs">
+                            {% if judging and judging.score is not none %}
+                            <span class="text-[var(--text-primary)]">{{ judging.score }}</span>
+                            {% else %}
+                            <span class="text-[var(--text-muted)]">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <form method="post" action="/jury/submissions/{{ sub.id }}/rejudge" class="inline" onsubmit="return confirm('确定要重判此提交吗？将删除现有判题记录。');">
+                                <button type="submit" class="text-[var(--warning)] hover:underline text-xs flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    重判
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-16 text-center">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--bg-hover)] flex items-center justify-center">
+                <svg class="w-6 h-6 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <p class="text-[var(--text-muted)] mb-1">暂无提交记录</p>
+            <p class="text-xs text-[var(--text-muted)]">等待选手提交代码后，这里将显示所有提交。</p>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="bg-gray-800 rounded-lg p-12 border border-gray-700 text-center">
-        <p class="text-gray-500 text-lg mb-2">暂无提交记录</p>
-        <p class="text-gray-600 text-sm">等待选手提交代码后，这里将显示所有提交。</p>
-    </div>
-    {% endif %}
 </div>
 
 <script>
@@ -119,6 +134,19 @@
             location.reload();
         }, 5000);
     }
+
+    try {
+        var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        var ws = new WebSocket(proto + '//' + location.host + '/ws/judge-updates');
+        ws.onmessage = function(event) {
+            try {
+                var data = JSON.parse(event.data);
+                if (data.type === 'judging_done') {
+                    location.reload();
+                }
+            } catch(e) {}
+        };
+    } catch(e) {}
 })();
 </script>
 {% endblock %}

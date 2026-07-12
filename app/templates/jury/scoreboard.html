@@ -1,105 +1,109 @@
 {% extends "base.html" %}
 {% block title %}计分板 - 裁判{% endblock %}
-{% block nav %}
-<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
-<a href="/jury/bank" class="hover:text-blue-400">题库</a>
-<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
-<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
-<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
-<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
-<a href="/jury/scoreboard" class="text-blue-400 font-semibold">计分板</a>
+{% block sidebar %}
+{% set active = 'scoreboard' %}
+{% include 'jury/_sidebar.html' %}
 {% endblock %}
+{% block breadcrumb %}<a href="/jury/" class="hover:text-[var(--text-primary)]">仪表盘</a> / 计分板{% endblock %}
 {% block content %}
-<div class="max-w-6xl mx-auto">
-    <div class="flex justify-between items-center mb-4">
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold mb-1">{{ contest.title }} - 计分板</h1>
-            <p class="text-gray-400 text-sm">裁判查看 — 显示全部真实数据</p>
+            <h1 class="text-xl font-bold">{{ contest.title }} - 计分板</h1>
+            <p class="text-xs text-[var(--text-muted)] mt-1">裁判查看 — 显示全部真实数据</p>
         </div>
-        <a href="/jury/scoreboard/{{ contest.id }}/export" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition text-sm">
-            📥 导出Excel成绩单
+        <a href="/jury/scoreboard/{{ contest.id }}/export" class="inline-flex items-center gap-1.5 bg-[var(--success)] hover:opacity-90 text-white text-sm px-4 py-2 rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            导出Excel成绩单
         </a>
     </div>
 
-    <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
-        <table class="w-full text-left">
-            <thead class="bg-gray-700 text-gray-300">
-                <tr>
-                    <th class="px-3 py-3 w-12 text-center">#</th>
-                    <th class="px-3 py-3">队伍</th>
-                    {% for problem in problems %}
-                    <th class="px-2 py-3 text-center font-mono text-sm">{{ problem.title|truncate(10, True, '..') }}</th>
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-[var(--bg-primary)] text-[var(--text-muted)] text-left">
+                        <th class="px-3 py-3 w-12 text-center font-medium">#</th>
+                        <th class="px-3 py-3 font-medium">队伍</th>
+                        {% for problem in problems %}
+                        <th class="px-2 py-3 text-center font-mono text-xs font-medium" title="{{ problem.title }}">{{ problem.title|truncate(10, True, '..') }}</th>
+                        {% endfor %}
+                        <th class="px-3 py-3 text-center font-medium">解题数</th>
+                        <th class="px-3 py-3 text-center font-medium">罚时/总分</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[var(--border)]">
+                    {% for item in board %}
+                    <tr class="hover:bg-[var(--bg-hover)] transition-colors">
+                        <td class="px-3 py-2.5 text-center text-[var(--text-muted)] font-mono text-xs">{{ loop.index }}</td>
+                        <td class="px-3 py-2.5 font-semibold text-sm text-[var(--text-primary)]">{{ item.teamname }}</td>
+                        {% for problem in problems %}
+                        {% set cache = item.problems.get(problem.id) %}
+                        <td class="px-2 py-2.5 text-center font-mono text-xs">
+                            {% if cache and cache.is_correct %}
+                            <span class="text-[var(--success)] font-bold" title="AC ({{ cache.submissions }} 次提交, {{ cache.total_time }} 罚时)">
+                                +{% if cache.submissions > 1 %}{{ cache.submissions - 1 }}{% endif %}
+                            </span>
+                            {% elif cache and not cache.is_correct %}
+                            <span class="text-[var(--danger)]">-{{ cache.submissions }}</span>
+                            {% else %}
+                            <span class="text-[var(--text-muted)]">.</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="px-3 py-2.5 text-center font-bold text-[var(--accent)] text-xs">{{ item.solved }}</td>
+                        <td class="px-3 py-2.5 text-center text-[var(--text-secondary)] text-xs font-mono">
+                            {% if contest.score_mode == "ioi" %}
+                            {{ item.total_score }}
+                            {% else %}
+                            {{ item.total_time }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="{{ 3 + problems|length }}" class="px-4 py-16 text-center text-[var(--text-muted)]">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--bg-hover)] flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            </div>
+                            <p>暂无排名数据</p>
+                        </td>
+                    </tr>
                     {% endfor %}
-                    <th class="px-3 py-3 text-center">解题数</th>
-                    <th class="px-3 py-3 text-center">罚时/总分</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-700 font-mono text-sm">
-                {% for item in board %}
-                <tr class="hover:bg-gray-750 transition">
-                    <td class="px-3 py-2 text-center text-gray-400">{{ loop.index }}</td>
-                    <td class="px-3 py-2 font-semibold">{{ item.teamname }}</td>
-                    {% for problem in problems %}
-                    {% set cache = item.problems.get(problem.id) %}
-                    <td class="px-2 py-2 text-center">
-                        {% if cache and cache.is_correct %}
-                        <span class="text-green-400 font-bold" title="AC ({{ cache.submissions }} 次提交, {{ cache.total_time }} 罚时)">
-                            +{% if cache.submissions > 1 %}{{ cache.submissions - 1 }}{% endif %}
-                        </span>
-                        {% elif cache and not cache.is_correct %}
-                        <span class="text-red-400" title="WA ({{ cache.submissions }} 次提交)">-{{ cache.submissions }}</span>
-                        {% else %}
-                        <span class="text-gray-600">.</span>
-                        {% endif %}
-                    </td>
-                    {% endfor %}
-                    <td class="px-3 py-2 text-center font-bold text-blue-300">{{ item.solved }}</td>
-                    <td class="px-3 py-2 text-center text-gray-300">
-                        {% if contest.score_mode == "ioi" %}
-                        {{ item.total_score }}
-                        {% else %}
-                        {{ item.total_time }}
-                        {% endif %}
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="{{ 3 + problems|length }}" class="px-4 py-12 text-center text-gray-500">
-                        <div class="text-4xl mb-2">/</div>
-                        <div>暂无排名数据</div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="mt-4 flex items-center justify-between">
-        <a href="/jury/" class="text-gray-400 hover:text-white transition">&larr; 返回仪表盘</a>
-        <span id="status" class="text-xs text-gray-500"></span>
+    <div class="flex items-center justify-between">
+        <span id="status" class="text-xs text-[var(--text-muted)]"></span>
     </div>
 </div>
 
 <script>
-// WebSocket 实时更新计分板
 (function() {
     var statusEl = document.getElementById('status');
     var reloadTimer = null;
+    var pendingReload = false;
 
     function doReload() {
-        statusEl.textContent = '正在刷新...';
+        if (pendingReload) return;
+        pendingReload = true;
+        statusEl.textContent = '排名已更新，正在刷新...';
+        statusEl.className = 'text-xs text-[var(--success)]';
         location.reload();
     }
 
-    // 兜底：每 60 秒刷新
-    setInterval(doReload, 60000);
+    setInterval(function() {
+        if (!pendingReload) location.reload();
+    }, 60000);
 
     try {
         var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
         var ws = new WebSocket(proto + '//' + location.host + '/ws/judge-updates');
         ws.onopen = function() {
             statusEl.textContent = '实时更新中';
-            statusEl.className = 'text-xs text-green-500';
+            statusEl.className = 'text-xs text-[var(--success)]';
         };
         ws.onmessage = function(event) {
             try {
@@ -108,17 +112,21 @@
                     if (reloadTimer) clearTimeout(reloadTimer);
                     reloadTimer = setTimeout(doReload, 1000);
                     statusEl.textContent = '收到新提交结果...';
-                    statusEl.className = 'text-xs text-yellow-400';
+                    statusEl.className = 'text-xs text-[var(--warning)]';
                 }
             } catch(e) {}
         };
         ws.onclose = function() {
-            statusEl.textContent = '连接断开，60秒后刷新';
-            statusEl.className = 'text-xs text-red-400';
+            statusEl.textContent = '连接断开，60秒后自动刷新';
+            statusEl.className = 'text-xs text-[var(--danger)]';
+        };
+        ws.onerror = function() {
+            statusEl.textContent = '实时连接失败，60秒后自动刷新';
+            statusEl.className = 'text-xs text-[var(--text-muted)]';
         };
     } catch(e) {
         statusEl.textContent = '60秒自动刷新';
-        statusEl.className = 'text-xs text-gray-500';
+        statusEl.className = 'text-xs text-[var(--text-muted)]';
     }
 })();
 </script>

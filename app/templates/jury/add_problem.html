@@ -1,73 +1,110 @@
 {% extends "base.html" %}
 {% block title %}裁判后台 - 选题 - {{ contest.title }}{% endblock %}
-{% block nav %}
-<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
-<a href="/jury/bank" class="hover:text-blue-400">题库</a>
-<a href="/jury/contests" class="text-blue-400 font-semibold">比赛</a>
-<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
-<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
-<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
-<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% block sidebar %}
+{% set active = 'contests' %}
+{% include 'jury/_sidebar.html' %}
 {% endblock %}
+{% block breadcrumb %}<a href="/jury/" class="hover:text-[var(--text-primary)]">仪表盘</a> / <a href="/jury/contests" class="hover:text-[var(--text-primary)]">比赛管理</a> / <a href="/jury/contests/{{ contest.id }}/problems" class="hover:text-[var(--text-primary)]">{{ contest.title }}</a> / 选题{% endblock %}
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">{{ contest.title }} — 从题库选题</h1>
-    <a href="/jury/contests/{{ contest.id }}/problems" class="text-gray-400 hover:text-white transition">&larr; 返回题目列表</a>
-</div>
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold">{{ contest.title }} — 从题库选题</h1>
+        <a href="/jury/contests/{{ contest.id }}/problems" class="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm transition flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            返回题目列表
+        </a>
+    </div>
 
-<div class="bg-gray-800 rounded-lg overflow-hidden">
-    <table class="w-full text-left">
-        <thead class="bg-gray-700 text-gray-300">
-            <tr>
-                <th class="px-4 py-3">PID</th>
-                <th class="px-4 py-3">标题</th>
-                <th class="px-4 py-3">难度</th>
-                <th class="px-4 py-3">标签</th>
-                <th class="px-4 py-3">操作</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-700">
-            {% for problem in all_problems %}
-            <tr class="hover:bg-gray-750">
-                <td class="px-4 py-3 text-gray-400 font-mono">{{ problem.pid }}</td>
-                <td class="px-4 py-3">{{ problem.title }}</td>
-                <td class="px-4 py-3">
-                    {% if problem.difficulty.value == "easy" %}
-                    <span class="text-green-400 bg-green-400/10 px-2 py-0.5 rounded text-xs">简单</span>
-                    {% elif problem.difficulty.value == "medium" %}
-                    <span class="text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded text-xs">中等</span>
-                    {% else %}
-                    <span class="text-red-400 bg-red-400/10 px-2 py-0.5 rounded text-xs">困难</span>
-                    {% endif %}
-                </td>
-                <td class="px-4 py-3 text-gray-400 text-sm">
-                    {% if problem.tags %}
-                        {% for tag in problem.tags.split(',') %}
-                        <span class="bg-gray-700 px-2 py-0.5 rounded text-xs mr-1">{{ tag.strip() }}</span>
-                        {% endfor %}
-                    {% endif %}
-                </td>
-                <td class="px-4 py-3">
-                    {% if problem.id in added_ids %}
-                    <form method="post" action="/jury/contests/{{ contest.id }}/remove-problem" style="display:inline">
+    <!-- Dual Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left: All Bank Problems -->
+        <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+                <h2 class="text-sm font-semibold">全部题库题目</h2>
+                <span class="text-xs text-[var(--text-muted)]">{{ all_problems|length }} 题</span>
+            </div>
+            <div class="divide-y divide-[var(--border)] max-h-[600px] overflow-y-auto">
+                {% for problem in all_problems %}
+                <div class="px-5 py-3 hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-between">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono text-[var(--text-muted)]">{{ problem.pid }}</span>
+                            <span class="text-sm font-medium text-[var(--text-primary)] truncate">{{ problem.title }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1">
+                            {% if problem.difficulty.value == "easy" %}
+                            <span class="text-[var(--success)] bg-[var(--success)]/10 px-1.5 py-0.5 rounded text-xs">简单</span>
+                            {% elif problem.difficulty.value == "medium" %}
+                            <span class="text-[var(--warning)] bg-[var(--warning)]/10 px-1.5 py-0.5 rounded text-xs">中等</span>
+                            {% else %}
+                            <span class="text-[var(--danger)] bg-[var(--danger)]/10 px-1.5 py-0.5 rounded text-xs">困难</span>
+                            {% endif %}
+                            {% if problem.tags %}
+                                {% for tag in problem.tags.split(',')[:2] %}
+                                <span class="text-[var(--text-muted)] text-xs">#{{ tag.strip() }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="ml-3 shrink-0">
+                        {% if problem.id in added_ids %}
+                        <span class="inline-flex items-center gap-1 text-[var(--success)] text-xs font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            已添加
+                        </span>
+                        {% else %}
+                        <form method="post" action="/jury/contests/{{ contest.id }}/add-problem" class="flex items-center gap-2">
+                            <input type="hidden" name="problem_id" value="{{ problem.id }}">
+                            <input type="number" name="order" value="0" min="0"
+                                   class="w-16 bg-[var(--bg-primary)] border border-[var(--border)] rounded px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+                                   placeholder="顺序">
+                            <button type="submit" class="bg-[var(--accent)] hover:opacity-90 text-white text-xs px-3 py-1.5 rounded-lg transition">添加</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="px-5 py-12 text-center text-[var(--text-muted)] text-sm">题库为空</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right: Already Added Problems -->
+        <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+                <h2 class="text-sm font-semibold">已添加的题目</h2>
+                <span class="text-xs text-[var(--text-muted)]">{{ added_ids|length }} 题</span>
+            </div>
+            <div class="divide-y divide-[var(--border)] max-h-[600px] overflow-y-auto">
+                {% for problem in all_problems %}
+                {% if problem.id in added_ids %}
+                <div class="px-5 py-3 bg-[var(--success)]/5 flex items-center justify-between">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono text-[var(--text-muted)]">{{ problem.pid }}</span>
+                            <span class="text-sm font-medium text-[var(--text-primary)] truncate">{{ problem.title }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1">
+                            {% if problem.difficulty.value == "easy" %}
+                            <span class="text-[var(--success)] bg-[var(--success)]/10 px-1.5 py-0.5 rounded text-xs">简单</span>
+                            {% elif problem.difficulty.value == "medium" %}
+                            <span class="text-[var(--warning)] bg-[var(--warning)]/10 px-1.5 py-0.5 rounded text-xs">中等</span>
+                            {% else %}
+                            <span class="text-[var(--danger)] bg-[var(--danger)]/10 px-1.5 py-0.5 rounded text-xs">困难</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <form method="post" action="/jury/contests/{{ contest.id }}/remove-problem" class="ml-3 shrink-0">
                         <input type="hidden" name="problem_id" value="{{ problem.id }}">
-                        <button type="submit" class="text-red-400 hover:underline">移除</button>
+                        <button type="submit" class="text-[var(--danger)] hover:underline text-xs">移除</button>
                     </form>
-                    {% else %}
-                    <form method="post" action="/jury/contests/{{ contest.id }}/add-problem" style="display:inline">
-                        <input type="hidden" name="problem_id" value="{{ problem.id }}">
-                        <input type="number" name="order" value="0" class="w-16 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm" placeholder="顺序">
-                        <button type="submit" class="text-green-400 hover:underline ml-1">添加</button>
-                    </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" class="px-4 py-8 text-center text-gray-500">题库为空</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="px-5 py-12 text-center text-[var(--text-muted)] text-sm">尚未添加题目</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

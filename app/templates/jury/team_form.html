@@ -1,56 +1,54 @@
 {% extends "base.html" %}
 {% block title %}裁判后台 - {{ "编辑队伍" if team else "新建队伍" }}{% endblock %}
-{% block nav %}
-<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
-<a href="/jury/bank" class="hover:text-blue-400">题库</a>
-<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
-<a href="/jury/teams" class="text-blue-400 font-semibold">队伍</a>
-<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
-<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
-<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% block sidebar %}
+{% set active = 'teams' %}
+{% include 'jury/_sidebar.html' %}
 {% endblock %}
+{% block breadcrumb %}<a href="/jury/" class="hover:text-[var(--text-primary)]">仪表盘</a> / <a href="/jury/teams" class="hover:text-[var(--text-primary)]">队伍管理</a> / {{ "编辑队伍" if team else "新建队伍" }}{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">{{ "编辑队伍" if team else "新建队伍" }}</h1>
+<div class="max-w-lg mx-auto">
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
+        <h1 class="text-xl font-bold mb-6">{{ "编辑队伍" if team else "新建队伍" }}</h1>
 
-<div class="bg-gray-800 rounded-lg p-6 max-w-lg">
-    <form method="post" action="{{ '/jury/teams/' ~ team.id ~ '/edit' if team else '/jury/teams/new' }}">
-        <div class="mb-4">
-            <label class="block text-gray-300 mb-1">用户名</label>
-            <input type="text" name="username" required
-                   value="{{ team.username if team else '' }}"
-                   class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-        </div>
+        <form method="post" action="{{ '/jury/teams/' ~ team.id ~ '/edit' if team else '/jury/teams/new' }}" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">用户名</label>
+                <input type="text" name="username" required
+                       value="{{ team.username if team else '' }}"
+                       class="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50">
+            </div>
 
-        <div class="mb-4">
-            <label class="block text-gray-300 mb-1">密码{{ "（留空则不修改）" if team else "" }}</label>
-            <input type="password" name="password" {{ "" if team else "required" }}
-                   class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-        </div>
+            <div>
+                <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">密码{{ "（留空则不修改）" if team else "" }}</label>
+                <input type="password" name="password" {{ "" if team else "required" }}
+                       class="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50">
+            </div>
 
-        <div class="mb-4">
-            <label class="block text-gray-300 mb-1">队伍名</label>
-            <input type="text" name="teamname" required
-                   value="{{ team.teamname if team else '' }}"
-                   class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-        </div>
+            <div>
+                <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">队伍名</label>
+                <input type="text" name="teamname" required
+                       value="{{ team.teamname if team else '' }}"
+                       class="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50">
+            </div>
 
-        <div class="mb-6">
-            <label class="flex items-center gap-2">
-                <input type="checkbox" name="enabled" value="1"
-                       {% if team is none or team.enabled %}checked{% endif %}
-                       class="bg-gray-700 border-gray-600 rounded text-blue-600 focus:ring-blue-500">
-                <span class="text-gray-300">启用</span>
-            </label>
-        </div>
+            <div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="enabled" value="1"
+                           {% if team is none or team.enabled %}checked{% endif %}
+                           class="rounded border-[var(--border)] bg-[var(--bg-primary)] text-[var(--accent)] focus:ring-[var(--accent)]/50">
+                    <span class="text-sm text-[var(--text-primary)]">启用</span>
+                </label>
+            </div>
 
-        <div class="flex gap-3">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition">
-                {{ "保存修改" if team else "创建队伍" }}
-            </button>
-            <a href="/jury/teams" class="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition text-center">
-                取消
-            </a>
-        </div>
-    </form>
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit" class="bg-[var(--accent)] hover:opacity-90 text-white text-sm px-6 py-2.5 rounded-lg transition">
+                    {{ "保存修改" if team else "创建队伍" }}
+                </button>
+                <a href="/jury/teams" class="bg-[var(--bg-hover)] hover:bg-[var(--border)] text-[var(--text-secondary)] text-sm px-6 py-2.5 rounded-lg transition text-center">
+                    取消
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

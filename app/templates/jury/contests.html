@@ -1,81 +1,92 @@
 {% extends "base.html" %}
 {% block title %}裁判后台 - 比赛管理{% endblock %}
-{% block nav %}
-<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
-<a href="/jury/bank" class="hover:text-blue-400">题库</a>
-<a href="/jury/contests" class="text-blue-400 font-semibold">比赛</a>
-<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
-<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
-<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
-<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% block sidebar %}
+{% set active = 'contests' %}
+{% include 'jury/_sidebar.html' %}
 {% endblock %}
+{% block breadcrumb %}<a href="/jury/" class="hover:text-[var(--text-primary)]">仪表盘</a> / 比赛管理{% endblock %}
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">比赛管理</h1>
-    <a href="/jury/contests/new" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-        + 新建比赛
-    </a>
-</div>
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold">比赛管理</h1>
+        <a href="/jury/contests/new" class="inline-flex items-center gap-1.5 bg-[var(--accent)] hover:opacity-90 text-white text-sm px-4 py-2 rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            新建比赛
+        </a>
+    </div>
 
-<div class="bg-gray-800 rounded-lg overflow-hidden">
-    <table class="w-full text-left">
-        <thead class="bg-gray-700 text-gray-300">
-            <tr>
-                <th class="px-4 py-3">#</th>
-                <th class="px-4 py-3">标题</th>
-                <th class="px-4 py-3">类型</th>
-                <th class="px-4 py-3">开始时间</th>
-                <th class="px-4 py-3">结束时间</th>
-                <th class="px-4 py-3">计分模式</th>
-                <th class="px-4 py-3">状态</th>
-                <th class="px-4 py-3">操作</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-700">
-            {% for contest in contests %}
-            <tr class="hover:bg-gray-750">
-                <td class="px-4 py-3">{{ contest.id }}</td>
-                <td class="px-4 py-3">{{ contest.title }}</td>
-                <td class="px-4 py-3">
-                    {% set ctype_val = contest.ctype.value if contest.ctype is not string else contest.ctype %}
-                    {% if ctype_val == "practice" %}
-                    <span class="text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded text-xs">练习</span>
-                    {% elif ctype_val == "homework" %}
-                    <span class="text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded text-xs">作业</span>
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-[var(--bg-primary)] text-[var(--text-muted)] text-left">
+                        <th class="px-4 py-3 font-medium">#</th>
+                        <th class="px-4 py-3 font-medium">标题</th>
+                        <th class="px-4 py-3 font-medium">类型</th>
+                        <th class="px-4 py-3 font-medium">开始时间</th>
+                        <th class="px-4 py-3 font-medium">结束时间</th>
+                        <th class="px-4 py-3 font-medium">计分模式</th>
+                        <th class="px-4 py-3 font-medium">状态</th>
+                        <th class="px-4 py-3 font-medium">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[var(--border)]">
+                    {% for contest in contests %}
+                    <tr class="hover:bg-[var(--bg-hover)] transition-colors">
+                        <td class="px-4 py-3 text-[var(--text-muted)] font-mono text-xs">{{ contest.id }}</td>
+                        <td class="px-4 py-3 text-[var(--text-primary)] font-medium">{{ contest.title }}</td>
+                        <td class="px-4 py-3">
+                            {% set ctype_val = contest.ctype.value if contest.ctype is not string else contest.ctype %}
+                            {% if ctype_val == "practice" %}
+                            <span class="text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded text-xs font-medium">练习</span>
+                            {% elif ctype_val == "homework" %}
+                            <span class="text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded text-xs font-medium">作业</span>
+                            {% else %}
+                            <span class="text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-0.5 rounded text-xs font-medium">比赛</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-[var(--text-secondary)] text-xs">{{ contest.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="px-4 py-3 text-[var(--text-secondary)] text-xs">{{ contest.end_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="px-4 py-3">
+                            <span class="text-[var(--text-secondary)] font-mono text-xs">{{ contest.score_mode.upper() if contest.score_mode is string else contest.score_mode.value.upper() }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if contest.enabled %}
+                            <span class="text-[var(--success)] bg-[var(--success)]/10 px-2 py-0.5 rounded text-xs font-medium">启用</span>
+                            {% else %}
+                            <span class="text-[var(--danger)] bg-[var(--danger)]/10 px-2 py-0.5 rounded text-xs font-medium">禁用</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <a href="/jury/contests/{{ contest.id }}/problems" class="text-[var(--success)] hover:underline text-xs">题目</a>
+                                <a href="/jury/contests/{{ contest.id }}/add-problem" class="text-purple-400 hover:underline text-xs">选题</a>
+                                <a href="/jury/contests/{{ contest.id }}/edit" class="text-[var(--accent)] hover:underline text-xs">编辑</a>
+                                <form method="post" action="/jury/contests/{{ contest.id }}/toggle" class="inline">
+                                    <button type="submit" class="text-[var(--warning)] hover:underline text-xs">
+                                        {% if contest.enabled %}禁用{% else %}启用{% endif %}
+                                    </button>
+                                </form>
+                                <form method="post" action="/jury/contests/{{ contest.id }}/delete" class="inline" onsubmit="return confirm('确定删除该比赛及所有关联数据？')">
+                                    <button type="submit" class="text-[var(--danger)] hover:underline text-xs">删除</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
                     {% else %}
-                    <span class="text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded text-xs">比赛</span>
-                    {% endif %}
-                </td>
-                <td class="px-4 py-3">{{ contest.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
-                <td class="px-4 py-3">{{ contest.end_time.strftime('%Y-%m-%d %H:%M') }}</td>
-                <td class="px-4 py-3">{{ contest.score_mode.upper() if contest.score_mode is string else contest.score_mode.value.upper() }}</td>
-                <td class="px-4 py-3">
-                    {% if contest.enabled %}
-                    <span class="text-green-400">启用</span>
-                    {% else %}
-                    <span class="text-red-400">禁用</span>
-                    {% endif %}
-                </td>
-                <td class="px-4 py-3 flex gap-2">
-                    <a href="/jury/contests/{{ contest.id }}/problems" class="text-green-400 hover:underline">题目</a>
-                    <a href="/jury/contests/{{ contest.id }}/add-problem" class="text-purple-400 hover:underline">选题</a>
-                    <a href="/jury/contests/{{ contest.id }}/edit" class="text-blue-400 hover:underline">编辑</a>
-                    <form method="post" action="/jury/contests/{{ contest.id }}/toggle" style="display:inline">
-                        <button type="submit" class="text-yellow-400 hover:underline">
-                            {% if contest.enabled %}禁用{% else %}启用{% endif %}
-                        </button>
-                    </form>
-                    <form method="post" action="/jury/contests/{{ contest.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除该比赛及所有关联数据？')">
-                        <button type="submit" class="text-red-400 hover:underline">删除</button>
-                    </form>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="8" class="px-4 py-8 text-center text-gray-500">暂无比赛</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    <tr>
+                        <td colspan="8" class="px-4 py-16 text-center text-[var(--text-muted)]">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--bg-hover)] flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            </div>
+                            <p>暂无比赛</p>
+                            <a href="/jury/contests/new" class="text-[var(--accent)] hover:underline text-sm mt-2 inline-block">创建第一个比赛</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

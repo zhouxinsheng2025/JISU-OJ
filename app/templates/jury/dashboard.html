@@ -1,36 +1,106 @@
 {% extends "base.html" %}
 {% block title %}裁判后台 - 仪表盘{% endblock %}
-{% block nav %}
-<a href="/jury/" class="hover:text-blue-400">仪表盘</a>
-<a href="/jury/bank" class="hover:text-blue-400">题库</a>
-<a href="/jury/contests" class="hover:text-blue-400">比赛</a>
-<a href="/jury/teams" class="hover:text-blue-400">队伍</a>
-<a href="/jury/submissions" class="hover:text-blue-400">提交</a>
-<a href="/jury/clarifications" class="hover:text-blue-400">问答</a>
-<a href="/jury/scoreboard" class="hover:text-blue-400">计分板</a>
+{% block sidebar %}
+{% set active = 'dashboard' %}
+{% include 'jury/_sidebar.html' %}
 {% endblock %}
+{% block breadcrumb %}仪表盘{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">裁判后台</h1>
-<div class="grid grid-cols-4 gap-4">
-    <a href="/jury/bank" class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition">
-        <div class="text-3xl mb-2">📚</div>
-        <div class="font-semibold">题库管理</div>
-        <div class="text-sm text-gray-400">管理全部题目</div>
-    </a>
-    <a href="/jury/contests" class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition">
-        <div class="text-3xl mb-2">📋</div>
-        <div class="font-semibold">比赛管理</div>
-        <div class="text-sm text-gray-400">创建和配置比赛</div>
-    </a>
-    <a href="/jury/teams" class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition">
-        <div class="text-3xl mb-2">👥</div>
-        <div class="font-semibold">队伍管理</div>
-        <div class="text-sm text-gray-400">管理参赛队伍</div>
-    </a>
-    <a href="/jury/submissions" class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition">
-        <div class="text-3xl mb-2">📤</div>
-        <div class="font-semibold">提交记录</div>
-        <div class="text-sm text-gray-400">查看所有提交</div>
-    </a>
+<div class="max-w-5xl mx-auto space-y-6">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-2xl font-bold text-[var(--accent)]">{{ stats_total_problems|default('--') }}</div>
+                    <div class="text-sm text-[var(--text-muted)] mt-1">题库题目</div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-2xl font-bold text-[var(--success)]">{{ stats_total_contests|default('--') }}</div>
+                    <div class="text-sm text-[var(--text-muted)] mt-1">比赛总数</div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-2xl font-bold text-[var(--warning)]">{{ stats_total_teams|default('--') }}</div>
+                    <div class="text-sm text-[var(--text-muted)] mt-1">参赛队伍</div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-2xl font-bold text-[var(--danger)]">{{ stats_total_submissions|default('--') }}</div>
+                    <div class="text-sm text-[var(--text-muted)] mt-1">提交记录</div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Action Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <a href="/jury/bank" class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5 hover:bg-[var(--bg-hover)] transition-all group">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0 group-hover:bg-blue-500/20 transition-colors">
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                </div>
+                <div>
+                    <div class="font-semibold text-[var(--text-primary)]">题库管理</div>
+                    <div class="text-xs text-[var(--text-muted)] mt-0.5">管理全部题目</div>
+                </div>
+            </div>
+        </a>
+        <a href="/jury/contests" class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5 hover:bg-[var(--bg-hover)] transition-all group">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
+                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                </div>
+                <div>
+                    <div class="font-semibold text-[var(--text-primary)]">比赛管理</div>
+                    <div class="text-xs text-[var(--text-muted)] mt-0.5">创建和配置比赛</div>
+                </div>
+            </div>
+        </a>
+        <a href="/jury/teams" class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5 hover:bg-[var(--bg-hover)] transition-all group">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center shrink-0 group-hover:bg-yellow-500/20 transition-colors">
+                    <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <div>
+                    <div class="font-semibold text-[var(--text-primary)]">队伍管理</div>
+                    <div class="text-xs text-[var(--text-muted)] mt-0.5">管理参赛队伍</div>
+                </div>
+            </div>
+        </a>
+        <a href="/jury/submissions" class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5 hover:bg-[var(--bg-hover)] transition-all group">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0 group-hover:bg-red-500/20 transition-colors">
+                    <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                </div>
+                <div>
+                    <div class="font-semibold text-[var(--text-primary)]">提交记录</div>
+                    <div class="text-xs text-[var(--text-muted)] mt-0.5">查看所有提交</div>
+                </div>
+            </div>
+        </a>
+    </div>
 </div>
 {% endblock %}
