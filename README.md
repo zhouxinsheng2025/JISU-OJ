@@ -19,6 +19,12 @@
 </p>
 
 <p align="center">
+  <a href="https://stevenjisu.github.io/" target="_blank">
+    <img src="https://img.shields.io/badge/🏆-吉林外国语大学人工智能学院竞赛-10b981?style=for-the-badge&logo=checkmarx&logoColor=white" alt="AI学院竞赛">
+  </a>
+</p>
+
+<p align="center">
   <a href="#快速开始">快速开始</a> ·
   <a href="#功能特性">功能特性</a> ·
   <a href="#使用指南">使用指南</a> ·
