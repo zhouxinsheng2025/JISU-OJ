@@ -3,6 +3,7 @@ from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.dependencies import require_role
 from app.models import (
@@ -334,6 +335,7 @@ async def submission_detail(
     if judging:
         runs_result = await db.execute(
             select(JudgeRun)
+            .options(selectinload(JudgeRun.testcase))
             .where(JudgeRun.judging_id == judging.id)
             .order_by(JudgeRun.id)
         )

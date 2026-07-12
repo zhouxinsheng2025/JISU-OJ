@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request, Depends, Form, Query, UploadFile, File
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from app.database import get_db
 from app.dependencies import require_role
 from app.models import User, Contest, Problem, ContestProblem, UserRole, Difficulty
@@ -717,12 +717,14 @@ async def jury_submission_detail(
 ):
     from app.models import Submission, Judging, JudgeRun
 
-    result = await db.execute(select(Submission).where(Submission.id == submission_id))
+    result = await db.execute(
+        select(Submission)
+        .options(selectinload(Submission.team), selectinload(Submission.problem))
+        .where(Submission.id == submission_id)
+    )
     sub = result.scalar_one_or_none()
     if sub is None:
         return RedirectResponse(url="/jury/submissions", status_code=303)
-
-    await db.refresh(sub, ["team", "problem"])
 
     j_result = await db.execute(
         select(Judging)
@@ -734,7 +736,9 @@ async def jury_submission_detail(
     runs = []
     if judging:
         runs_result = await db.execute(
-            select(JudgeRun).where(JudgeRun.judging_id == judging.id)
+            select(JudgeRun)
+            .options(selectinload(JudgeRun.testcase))
+            .where(JudgeRun.judging_id == judging.id)
         )
         runs = list(runs_result.scalars().all())
 
