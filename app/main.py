@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse, FileResponse
 from app.config import settings
 from app.judge.engine import start_judge_engine
 from app.logging_config import configure_logging
-from app.middleware import RateLimitMiddleware
+# from app.middleware import RateLimitMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -147,9 +147,7 @@ async def judge_websocket(websocket):
         unsubscribe(queue)
 
 
-# 构建中间件栈（Starlette 0.37+ 需要手动调用）
+# 构建中间件栈（Starlette 0.37+ 必须手动调用）
 app.middleware_stack = app.build_middleware_stack()
-# 外层包装限流中间件
-app.middleware_stack = RateLimitMiddleware(app.middleware_stack)
 
 
