@@ -15,12 +15,12 @@ async def public_scoreboard(
     db: AsyncSession = Depends(get_db),
     contest_id: int = Query(None),
 ):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     if contest_id:
         result = await db.execute(select(Contest).where(Contest.id == contest_id))
     else:
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         result = await db.execute(
             select(Contest)
             .where(Contest.enabled == True, Contest.start_time <= now, Contest.end_time >= now)
@@ -34,7 +34,7 @@ async def public_scoreboard(
             {"request": request, "contest": None, "board": [], "problems": [], "freeze": False},
         )
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     freeze = contest.freeze_time is not None and now >= contest.freeze_time
     board = await score_service.get_scoreboard(db, contest.id, freeze=freeze, freeze_time=contest.freeze_time)
     problems = await score_service.get_contest_problems(db, contest.id)

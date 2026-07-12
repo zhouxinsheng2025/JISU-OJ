@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,7 @@ TEMPLATE_DIR = "team"
 
 async def _get_active_contest(db: AsyncSession) -> Contest | None:
     """Get current active contest (excluding practice)."""
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     result = await db.execute(
         select(Contest).where(
             Contest.enabled == True,
@@ -48,7 +48,7 @@ async def dashboard(
     user: User = Depends(require_role("team")),
     db: AsyncSession = Depends(get_db),
 ):
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     result = await db.execute(
         select(Contest).where(
             Contest.enabled == True,
@@ -80,7 +80,7 @@ async def list_problems(
     user: User = Depends(require_role("team")),
     db: AsyncSession = Depends(get_db),
 ):
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     result = await db.execute(
         select(Contest).where(
             Contest.enabled == True,
@@ -197,7 +197,7 @@ async def submit_code(
     if problem is None:
         return {"error": "题目不存在"}
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
 
     # 先查找本题目所属的进行中比赛
     cp_result = await db.execute(
@@ -267,7 +267,7 @@ async def team_scoreboard(
     user: User = Depends(require_role("team")),
     db: AsyncSession = Depends(get_db),
 ):
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     result = await db.execute(
         select(Contest).where(
             Contest.enabled == True,
@@ -408,7 +408,7 @@ async def team_clarifications(
 ):
     from app.models import Clarification
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     result = await db.execute(
         select(Contest).where(
             Contest.enabled == True,
@@ -447,7 +447,7 @@ async def team_ask(
 ):
     from app.models import Clarification
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     result = await db.execute(
         select(Contest).where(
             Contest.enabled == True,

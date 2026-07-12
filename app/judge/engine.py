@@ -16,7 +16,7 @@ import logging
 import os
 import shutil
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, text
 from app.config import settings
@@ -189,8 +189,8 @@ async def _judge_submission(submission_id: int, worker_id: int):
                 submission_id=submission.id,
                 result=Verdict.RTE,
                 score=0.0,
-                started=datetime.now(timezone.utc),
-                ended=datetime.now(timezone.utc),
+                started=datetime.utcnow(),
+                ended=datetime.utcnow(),
             )
             db.add(judging)
             submission.state = SubmissionState.DONE
@@ -212,8 +212,8 @@ async def _judge_submission(submission_id: int, worker_id: int):
                 submission_id=submission.id,
                 result=Verdict.RTE,
                 score=0.0,
-                started=datetime.now(timezone.utc),
-                ended=datetime.now(timezone.utc),
+                started=datetime.utcnow(),
+                ended=datetime.utcnow(),
             )
             db.add(judging)
             submission.state = SubmissionState.DONE
@@ -236,7 +236,7 @@ async def _judge_submission(submission_id: int, worker_id: int):
         try:
             judging = Judging(
                 submission_id=submission.id,
-                started=datetime.now(timezone.utc),
+                started=datetime.utcnow(),
             )
             db.add(judging)
             await db.flush()
@@ -254,7 +254,7 @@ async def _judge_submission(submission_id: int, worker_id: int):
                 if not compile_ok:
                     # CE: 存储编译错误信息，让用户可以看到具体错误
                     judging.result = Verdict.CE
-                    judging.ended = datetime.now(timezone.utc)
+                    judging.ended = datetime.utcnow()
                     submission.state = SubmissionState.DONE
                     # 创建一条 JudgeRun 来保存编译错误详情
                     if testcases:
@@ -342,7 +342,7 @@ async def _judge_submission(submission_id: int, worker_id: int):
 
             judging.result = final_verdict
             judging.score = final_score
-            judging.ended = datetime.now(timezone.utc)
+            judging.ended = datetime.utcnow()
             submission.state = SubmissionState.DONE
             await db.commit()
 
@@ -375,7 +375,7 @@ async def _judge_submission(submission_id: int, worker_id: int):
             logger.error("判题异常 submission=%d: %s", submission_id, e, exc_info=True)
             if judging:
                 judging.result = Verdict.RTE
-                judging.ended = datetime.now(timezone.utc)
+                judging.ended = datetime.utcnow()
                 # 创建 JudgeRun 记录异常信息
                 if testcases:
                     try:
@@ -467,7 +467,7 @@ async def _update_progress(db: AsyncSession, user_id: int, problem_id: int, verd
     """更新用户刷题进度 — 使用 upsert 防竞态"""
     from app.models import UserProgress
     is_ac = verdict == Verdict.AC.value
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
 
     if is_postgresql():
         from sqlalchemy import text as sa_text
