@@ -19,7 +19,7 @@ app.middleware("http")(rate_limit_middleware)
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
 
-@app.get("/static/{filename}")
+@app.get("/static/{filename:path}")
 async def static_file(filename: str):
     return FileResponse(os.path.join(STATIC_DIR, filename))
 
@@ -33,6 +33,10 @@ async def startup():
     await init_db()
     await _seed_admin()
     await _seed_practice_contest()
+    # Docker 沙箱模式：确保镜像已构建
+    if settings.USE_DOCKER_SANDBOX:
+        from app.judge.sandbox import build_sandbox_image
+        _ = await asyncio.to_thread(build_sandbox_image)
     await start_judge_engine()
 
 

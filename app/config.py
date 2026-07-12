@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = ""  # 留空则只输出到控制台
 
+    # Docker 沙箱 (生产环境推荐开启)
+    USE_DOCKER_SANDBOX: bool = False  # 启用 Docker 容器隔离执行
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

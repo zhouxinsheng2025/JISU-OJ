@@ -21,6 +21,7 @@ LANGUAGE_EXT = {
 
 async def compile_code(source_code: str, language: str, work_dir: str) -> tuple[bool, str, str]:
     """编译源代码，返回 (成功, 可执行路径或错误, 编译器输出)"""
+    work_dir = os.path.abspath(work_dir)
     os.makedirs(work_dir, exist_ok=True)
 
     if language == "python":

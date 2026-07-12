@@ -145,12 +145,17 @@ async def _judge_submission(submission_id: int, worker_id: int):
         if submission is None:
             return
 
+        logger.debug("Judge start: submission=%d lang=%s prob=%d code_len=%d",
+                     submission_id, submission.language,
+                     submission.problem_id, len(submission.source_code))
+
         # 并行加载题目、测试数据、比赛信息
         problem_result = await db.execute(
             select(Problem).where(Problem.id == submission.problem_id)
         )
         problem = problem_result.scalar_one_or_none()
         if problem is None:
+            logger.error("Judge: problem not found for submission %d", submission_id)
             submission.state = SubmissionState.DONE
             await db.commit()
             return
@@ -161,6 +166,7 @@ async def _judge_submission(submission_id: int, worker_id: int):
             .order_by(TestCase.order)
         )
         testcases = list(tc_result.scalars().all())
+        logger.debug("Judge: %d testcases for problem %d", len(testcases), submission.problem_id)
 
         contest_result = await db.execute(
             select(Contest).where(Contest.id == submission.contest_id)
@@ -168,9 +174,11 @@ async def _judge_submission(submission_id: int, worker_id: int):
         contest = contest_result.scalar_one_or_none()
         score_mode = contest.score_mode.value if contest else "icpc"
 
-        # 工作目录
-        work_dir = tempfile.mkdtemp(dir=settings.RUNS_DIR)
-        os.makedirs(work_dir, exist_ok=True)
+        # 工作目录（仅 subprocess 模式使用）
+        work_dir = None
+        if not settings.USE_DOCKER_SANDBOX:
+            work_dir = tempfile.mkdtemp(dir=settings.RUNS_DIR)
+            os.makedirs(work_dir, exist_ok=True)
 
         judging = None
         try:
@@ -181,24 +189,48 @@ async def _judge_submission(submission_id: int, worker_id: int):
             db.add(judging)
             await db.flush()
 
-            # 编译
-            compile_ok, exe_or_error, compile_output = await compile_code(
-                submission.source_code, submission.language, work_dir
-            )
-            if not compile_ok:
-                judging.result = Verdict.CE
-                judging.ended = datetime.utcnow()
-                submission.state = SubmissionState.DONE
-                await db.commit()
-                return
+            # ── 编译 ──
+            # Docker 沙箱模式：编译在容器内完成（与运行一起）
+            # Subprocess 模式：在外部编译一次，然后逐测试点运行
+            exe_or_error = None
+            compile_ok = True
 
-            # 运行测试点
+            if not settings.USE_DOCKER_SANDBOX:
+                compile_ok, exe_or_error, compile_output = await compile_code(
+                    submission.source_code, submission.language, work_dir
+                )
+                if not compile_ok:
+                    judging.result = Verdict.CE
+                    judging.ended = datetime.utcnow()
+                    submission.state = SubmissionState.DONE
+                    await db.commit()
+                    return
+
+            # ── 运行测试点 ──
             run_results = []
             for tc in testcases:
-                verdict, output, runtime, stderr = await run_program(
-                    exe_or_error, submission.language, work_dir,
-                    tc.input, problem.time_limit, problem.memory_limit,
-                )
+                if settings.USE_DOCKER_SANDBOX:
+                    # Docker sandbox: compile + run in isolated container
+                    from app.judge.sandbox import run_in_container
+                    verdict, output, runtime, stderr = await run_in_container(
+                        submission.language, submission.source_code,
+                        tc.input, problem.time_limit, problem.memory_limit,
+                    )
+                else:
+                    # Subprocess runner: run pre-compiled binary
+                    verdict, output, runtime, stderr = await run_program(
+                        exe_or_error, submission.language, work_dir,
+                        tc.input, problem.time_limit, problem.memory_limit,
+                    )
+
+                # Log abnormal results for debugging
+                if verdict in ("RTE", "CE", "MLE", "OLE"):
+                    logger.warning(
+                        "%s on testcase %d: stderr=%s",
+                        verdict, tc.id, stderr[:200] if stderr else "(empty)"
+                    )
+
+                # Only compare output if execution was normal (no verdict yet)
                 if verdict is None:
                     verdict = compare_output(output, tc.output)
 
@@ -213,11 +245,14 @@ async def _judge_submission(submission_id: int, worker_id: int):
                 run_results.append((verdict, runtime))
 
             # 汇总
+            logger.debug("Judge run_results: %s", [(v, round(t, 3)) for v, t in run_results])
             if score_mode == "ioi":
                 final_verdict, final_score = calculate_ioi_result(run_results, len(testcases))
             else:
                 final_verdict, _ = calculate_icpc_result(run_results)
                 final_score = 100.0 if final_verdict == Verdict.AC.value else 0.0
+            logger.info("Judge done: submission=%d verdict=%s score=%.1f",
+                        submission_id, final_verdict, final_score)
 
             judging.result = final_verdict
             judging.score = final_score
@@ -240,14 +275,19 @@ async def _judge_submission(submission_id: int, worker_id: int):
             })
 
         except Exception as e:
+            logger.error("判题失败 submission=%d: %s", submission_id, e, exc_info=True)
             if judging:
                 judging.result = Verdict.RTE
                 judging.ended = datetime.utcnow()
             submission.state = SubmissionState.DONE
-            await db.commit()
+            try:
+                await db.commit()
+            except Exception:
+                pass
 
         finally:
-            shutil.rmtree(work_dir, ignore_errors=True)
+            if work_dir is not None:
+                shutil.rmtree(work_dir, ignore_errors=True)
 
 
 async def _update_scoreboard(db: AsyncSession, submission: Submission, verdict: str, score: float, contest: Contest):
