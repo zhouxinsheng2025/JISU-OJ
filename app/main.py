@@ -14,7 +14,8 @@ app = FastAPI(
     redoc_url="/redoc" if not settings.PRODUCTION else None,
 )
 
-app.add_middleware(RateLimitMiddleware)
+# 限流中间件 — 手动构建为顶层 ASGI app
+app = RateLimitMiddleware(app)
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
