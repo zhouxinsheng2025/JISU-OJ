@@ -464,6 +464,8 @@ async def import_luogu_problem(
     file = form.get("zipfile")
     if file and file.filename and file.filename.endswith('.zip'):
         content = await file.read()
+        if len(content) > settings.UPLOAD_SIZE_LIMIT:
+            return RedirectResponse(url="/jury/bank", status_code=303)
         problem = await import_from_luogu_zip(db, content)
         if problem:
             return RedirectResponse(url=f"/jury/problems/{problem.id}/testcases", status_code=303)

@@ -16,6 +16,10 @@
         </div>
         {% endif %}
 
+        {% if error %}
+        <div class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-2.5 rounded-lg mb-4 text-sm">{{ error }}</div>
+        {% endif %}
+
         <form method="post" action="{% if problem %}/jury/bank/{{ problem.id }}/edit{% else %}/jury/bank/new{% endif %}" class="space-y-5">
             <div>
                 <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5" for="title">标题</label>

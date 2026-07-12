@@ -10,6 +10,10 @@
     <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
         <h1 class="text-xl font-bold mb-6">{{ "编辑比赛" if contest else "新建比赛" }}</h1>
 
+        {% if error %}
+        <div class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-2.5 rounded-lg mb-4 text-sm">{{ error }}</div>
+        {% endif %}
+
         <form method="post" action="{{ '/jury/contests/' ~ contest.id ~ '/edit' if contest else '/jury/contests/new' }}" class="space-y-5">
             <div>
                 <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">标题</label>
@@ -20,7 +24,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">类型</label>
-                {% set ctype_val = contest.ctype.value if contest and contest.ctype is not string else (contest.ctype if contest else 'contest') %}
+                {% set ctype_val = contest.ctype.value if contest else 'contest' %}
                 <select name="ctype"
                         class="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50">
                     <option value="contest" {% if ctype_val == "contest" %}selected{% endif %}>正式比赛</option>

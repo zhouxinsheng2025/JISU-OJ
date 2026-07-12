@@ -10,6 +10,10 @@
     <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
         <h1 class="text-xl font-bold mb-6">{{ "编辑队伍" if team else "新建队伍" }}</h1>
 
+        {% if error %}
+        <div class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-2.5 rounded-lg mb-4 text-sm">{{ error }}</div>
+        {% endif %}
+
         <form method="post" action="{{ '/jury/teams/' ~ team.id ~ '/edit' if team else '/jury/teams/new' }}" class="space-y-5">
             <div>
                 <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">用户名</label>
