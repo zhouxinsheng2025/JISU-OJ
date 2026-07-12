@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_HOURS: int = 24
 
-    # 判题引擎 — 并行判题 worker 数量
-    JUDGE_WORKERS: int = 8            # 200人并发建议 ≥8
+    # 判题引擎 — 并行判题 worker 数量 (gunicorn 4进程 × 2 = 8总计)
+    JUDGE_WORKERS: int = 2
     JUDGE_POLL_INTERVAL: float = 0.3  # 轮询间隔(秒)
     COMPILE_TIME_LIMIT: int = 30
     SOURCE_SIZE_LIMIT: int = 256 * 1024
