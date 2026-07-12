@@ -50,6 +50,7 @@
 | 💬 **问答系统** | 选手提交疑问 → 裁判回复，支持公开/私密 |
 | 📱 **响应式设计** | 手机、平板、桌面均可正常使用 |
 | 🐳 **Docker 部署** | 提供 Dockerfile，一行命令部署 |
+| 🏫 **竞赛队介绍** | [![AI学院竞赛](https://img.shields.io/badge/吉林外国语大学人工智能学院竞赛-10b981?style=flat-square&logo=checkmarx&logoColor=white)](https://stevenjisu.github.io/) |
 
 ## 🚀 快速开始
 
