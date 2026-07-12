@@ -577,11 +577,17 @@ async def add_testcase(
     db: AsyncSession = Depends(get_db),
 ):
     from app.models import TestCase
+    # 计算下一个 order 值
+    order_result = await db.execute(
+        select(TestCase.order).where(TestCase.problem_id == problem_id).order_by(TestCase.order.desc()).limit(1)
+    )
+    next_order = (order_result.scalar_one_or_none() or 0) + 1
     tc = TestCase(
         problem_id=problem_id,
         input=input_data,
         output=output_data,
         is_sample=(is_sample == "1"),
+        order=next_order,
     )
     db.add(tc)
     await db.commit()

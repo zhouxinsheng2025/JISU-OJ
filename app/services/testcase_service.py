@@ -47,15 +47,18 @@ def parse_testdata_zip(zip_bytes: bytes) -> list[dict]:
                 "is_sample": in_sample or out_sample,
             })
 
-    # Sort by numeric key
+    # Sort by numeric key for consistent testcase order
     def sort_key(tc):
         try:
-            # Extract numeric part from key
-            key = list(inputs.keys())[list(inputs.values()).index((tc["input"], tc["is_sample"]))] if (tc["input"], tc["is_sample"]) in inputs.values() else "0"
-            return int(re.sub(r'\D', '', key) or "0")
-        except:
+            # Match this testcase back to its input key
+            for k, (in_content, _) in inputs.items():
+                if in_content.strip() == tc["input"]:
+                    return int(re.sub(r'\D', '', k) or "0")
+            return 0
+        except Exception:
             return 0
 
+    testcases.sort(key=sort_key)
     return testcases
 
 
