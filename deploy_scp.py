@@ -73,14 +73,14 @@ print("  installing deps...")
 ssh_cmd(c, f"cd {APP} && {PY} -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple 2>&1 | tail -5", timeout=180)
 print("  stopping old...")
 ssh_cmd(c, "fuser -k 80/tcp 2>/dev/null; sleep 2; echo 'old stopped'", timeout=10)
-print("  starting gunicorn (4 workers)...")
-ssh_cmd(c, f"cd {APP} && nohup {PY} -m gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 2 --bind 0.0.0.0:80 --timeout 120 --access-logfile - --error-logfile - > server.log 2>&1 < /dev/null & echo 'started'", timeout=10)
+print("  starting uvicorn (2 workers)...")
+ssh_cmd(c, f"cd {APP} && nohup {PY} -m uvicorn app.main:app --host 0.0.0.0 --port 80 --workers 2 --log-level info > server.log 2>&1 < /dev/null & echo 'started'", timeout=10)
 time.sleep(5)
 
 # 5. 验证
 step("5/5 Verify")
 ssh_cmd(c, "echo '--- Health ---' && curl -s http://localhost:80/health")
-ssh_cmd(c, "echo '--- Workers ---' && ps aux | grep -E 'gunicorn|uvicorn' | grep -v grep | wc -l && echo 'processes running'")
+ssh_cmd(c, "echo '--- Workers ---' && ps aux | grep uvicorn | grep -v grep | wc -l && echo 'processes running'")
 ssh_cmd(c, f"echo '--- Log (tail) ---' && cd {APP} && tail -15 server.log")
 
 c.close()
