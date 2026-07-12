@@ -1,80 +1,118 @@
 {% extends "base.html" %}
 {% block title %}问答 - 澄清系统{% endblock %}
-{% block nav %}
-<a href="/team/" class="hover:text-blue-400">仪表盘</a>
-<a href="/team/problems" class="hover:text-blue-400">题目</a>
-<a href="/team/practice" class="hover:text-blue-400">练习</a>
-<a href="/team/submissions" class="hover:text-blue-400">提交记录</a>
-<a href="/team/clarifications" class="text-blue-400 font-semibold">问答</a>
-<a href="/team/scoreboard" class="hover:text-blue-400">计分板</a>
+{% block sidebar %}
+<!-- 仪表盘 -->
+<a href="/team/" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+    <span class="nav-label">仪表盘</span>
+</a>
+<!-- 题目 -->
+<a href="/team/problems" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    <span class="nav-label">题目列表</span>
+</a>
+<!-- 练习 -->
+<a href="/team/practice" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span class="nav-label">开放练习</span>
+</a>
+<!-- 提交记录 -->
+<a href="/team/submissions" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+    <span class="nav-label">提交记录</span>
+</a>
+<!-- 计分板 -->
+<a href="/team/scoreboard" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    <span class="nav-label">计分板</span>
+</a>
+<!-- 问答 -->
+<a href="/team/clarifications" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 bg-blue-500/10 text-blue-400 border-l-2 border-blue-500">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+    <span class="nav-label">问答</span>
+</a>
 {% endblock %}
+{% block breadcrumb %}<a href="/team/" class="hover:text-[var(--text-primary)]">仪表盘</a> / 问答{% endblock %}
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <h1 class="text-2xl font-bold mb-6">问答 / 澄清</h1>
-
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Ask Question Form -->
     {% if contest %}
-    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
-        <h2 class="text-lg font-semibold mb-4">发起提问</h2>
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            发起提问
+        </h2>
         <form method="POST" action="/team/clarifications/new">
             <textarea name="question" rows="4" required
-                      class="w-full bg-gray-900 border border-gray-600 rounded px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 mb-4"
+                      class="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition mb-4 resize-y"
                       placeholder="描述你的问题..."></textarea>
             <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-semibold transition">
+                    class="inline-flex items-center gap-2 bg-[var(--accent)] hover:opacity-90 text-white px-5 py-2.5 rounded-lg font-semibold transition text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                 提交问题
             </button>
         </form>
     </div>
     {% else %}
-    <div class="bg-yellow-900 border border-yellow-700 text-yellow-200 px-4 py-3 rounded-lg mb-6">
+    <div class="bg-yellow-900/30 border border-yellow-700/30 text-yellow-200 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
         当前没有进行中的比赛，无法提问。
     </div>
     {% endif %}
 
-    <div class="bg-gray-800 rounded-lg border border-gray-700">
-        <div class="px-6 py-4 border-b border-gray-700">
-            <h2 class="text-lg font-semibold">问答记录</h2>
+    <!-- Q&A List -->
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-[var(--border)]">
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+                <svg class="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                问答记录
+            </h2>
         </div>
 
         {% if clarifications %}
-        <div class="divide-y divide-gray-700">
+        <div class="divide-y divide-[var(--border)]">
             {% for clar in clarifications %}
-            <div class="px-6 py-5">
+            <div class="px-5 py-5">
+                <!-- Question -->
                 <div class="flex items-start gap-3 mb-3">
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-900 flex items-center justify-center text-blue-300 text-sm font-bold">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-blue-400 text-sm font-bold">
                         Q
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-sm font-semibold text-blue-400">{{ clar.sender.teamname or clar.sender.username }}</span>
-                            <span class="text-xs text-gray-500">{{ clar.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                            <span class="text-sm font-semibold text-[var(--accent)]">{{ clar.sender.teamname or clar.sender.username }}</span>
+                            <span class="text-xs text-[var(--text-muted)]">{{ clar.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
                         </div>
-                        <div class="text-white whitespace-pre-wrap">{{ clar.question }}</div>
+                        <div class="text-[var(--text-primary)] whitespace-pre-wrap text-sm">{{ clar.question }}</div>
                     </div>
                 </div>
 
+                <!-- Answer -->
                 {% if clar.answer %}
                 <div class="flex items-start gap-3 ml-11">
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-900 flex items-center justify-center text-green-300 text-sm font-bold">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-900/50 flex items-center justify-center text-green-400 text-sm font-bold">
                         A
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-sm font-semibold text-green-400">裁判</span>
+                            <span class="text-sm font-semibold text-[var(--success)]">裁判</span>
                         </div>
-                        <div class="text-gray-200 whitespace-pre-wrap">{{ clar.answer }}</div>
+                        <div class="text-[var(--text-secondary)] whitespace-pre-wrap text-sm">{{ clar.answer }}</div>
                     </div>
                 </div>
                 {% else %}
-                <div class="ml-11 mt-2 text-sm text-gray-500 italic">等待裁判回复...</div>
+                <div class="ml-11 mt-2 text-sm text-[var(--text-muted)] italic">等待裁判回复...</div>
                 {% endif %}
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <div class="px-6 py-12 text-center text-gray-500">
-            <p class="text-lg mb-2">暂无问答记录</p>
-            <p class="text-sm text-gray-600">如对题目有疑问，请在上方表单中提交问题</p>
+        <div class="px-6 py-16 text-center">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--bg-hover)] flex items-center justify-center">
+                <svg class="w-6 h-6 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            </div>
+            <p class="text-[var(--text-muted)] mb-1">暂无问答记录</p>
+            <p class="text-xs text-[var(--text-muted)]">如对题目有疑问，请在上方表单中提交问题</p>
         </div>
         {% endif %}
     </div>

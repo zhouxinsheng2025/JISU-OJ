@@ -1,64 +1,111 @@
 {% extends "base.html" %}
 {% block title %}{{ problem.title }}{% endblock %}
-{% block nav %}
-<a href="/team/" class="hover:text-blue-400">仪表盘</a>
-<a href="/team/problems" class="hover:text-blue-400">题目</a>
-<a href="/team/problems/{{ problem.id }}" class="text-blue-400 font-semibold">详情</a>
+{% block sidebar %}
+<!-- 仪表盘 -->
+<a href="/team/" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+    <span class="nav-label">仪表盘</span>
+</a>
+<!-- 题目 -->
+<a href="/team/problems" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 bg-blue-500/10 text-blue-400 border-l-2 border-blue-500">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    <span class="nav-label">题目列表</span>
+</a>
+<!-- 练习 -->
+<a href="/team/practice" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span class="nav-label">开放练习</span>
+</a>
+<!-- 提交记录 -->
+<a href="/team/submissions" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+    <span class="nav-label">提交记录</span>
+</a>
+<!-- 计分板 -->
+<a href="/team/scoreboard" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    <span class="nav-label">计分板</span>
+</a>
+<!-- 问答 -->
+<a href="/team/clarifications" class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded-lg mx-2 mb-0.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+    <span class="nav-label">问答</span>
+</a>
 {% endblock %}
+{% block breadcrumb %}<a href="/team/" class="hover:text-[var(--text-primary)]">仪表盘</a> / <a href="/team/problems" class="hover:text-[var(--text-primary)]">题目列表</a> / {{ problem.title }}{% endblock %}
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <div class="mb-4">
-        <a href="/team/problems" class="text-gray-400 hover:text-white transition text-sm">&larr; 返回题目列表</a>
-    </div>
-
-    <!-- 题目头部信息 -->
-    <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-        <div class="flex justify-between items-start mb-4">
-            <div>
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Problem Header -->
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
+        <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
                 <h1 class="text-2xl font-bold font-mono">{{ problem.title }}</h1>
+                {% if problem.difficulty %}
+                <div class="mt-2">
+                    {% if problem.difficulty.value == "easy" %}
+                    <span class="text-[var(--success)] bg-[var(--success)]/10 px-2 py-0.5 rounded text-xs font-medium">简单</span>
+                    {% elif problem.difficulty.value == "medium" %}
+                    <span class="text-[var(--warning)] bg-[var(--warning)]/10 px-2 py-0.5 rounded text-xs font-medium">中等</span>
+                    {% else %}
+                    <span class="text-[var(--danger)] bg-[var(--danger)]/10 px-2 py-0.5 rounded text-xs font-medium">困难</span>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
-            <div class="text-right text-sm text-gray-400 font-mono">
-                <div class="mb-1">时间限制: <span class="text-yellow-400">{{ problem.time_limit }}s</span></div>
-                <div>内存限制: <span class="text-yellow-400">{{ problem.memory_limit }} MB</span></div>
+            <div class="text-right text-sm text-[var(--text-muted)] font-mono shrink-0">
+                <div class="mb-1">时间限制: <span class="text-[var(--warning)]">{{ problem.time_limit }}s</span></div>
+                <div>内存限制: <span class="text-[var(--warning)]">{{ problem.memory_limit }} MB</span></div>
             </div>
         </div>
     </div>
 
-    <!-- 题目描述 -->
-    <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-        <h2 class="text-lg font-semibold text-blue-400 mb-3">题目描述</h2>
-        <div class="prose prose-invert max-w-none text-gray-200 leading-relaxed whitespace-pre-wrap">
+    <!-- Description -->
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-[var(--accent)] mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            题目描述
+        </h2>
+        <div class="prose prose-invert max-w-none text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap text-sm">
             {{ problem.description }}
         </div>
     </div>
 
-    <!-- 样例输入输出 -->
+    <!-- Samples -->
     {% if samples %}
-    <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-        <h2 class="text-lg font-semibold text-green-400 mb-3">样例</h2>
-        {% for sample in samples %}
-        <div class="mb-4 last:mb-0">
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <div class="text-sm text-gray-400 mb-1">样例输入 {{ loop.index }}</div>
-                    <pre class="bg-gray-900 rounded p-3 text-sm text-green-300 font-mono overflow-x-auto border border-gray-700">{{ sample.input }}</pre>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-400 mb-1">样例输出 {{ loop.index }}</div>
-                    <pre class="bg-gray-900 rounded p-3 text-sm text-green-300 font-mono overflow-x-auto border border-gray-700">{{ sample.output }}</pre>
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-[var(--success)] mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            样例
+        </h2>
+        <div class="space-y-4">
+            {% for sample in samples %}
+            <div class="border border-[var(--border)] rounded-lg overflow-hidden">
+                <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border)]">
+                    <div class="p-4">
+                        <div class="text-xs text-[var(--text-muted)] mb-2 font-medium">样例输入 {{ loop.index }}</div>
+                        <pre class="bg-[var(--bg-primary)] rounded-lg p-3 text-sm text-[var(--success)] font-mono overflow-x-auto">{{ sample.input }}</pre>
+                    </div>
+                    <div class="p-4">
+                        <div class="text-xs text-[var(--text-muted)] mb-2 font-medium">样例输出 {{ loop.index }}</div>
+                        <pre class="bg-[var(--bg-primary)] rounded-lg p-3 text-sm text-[var(--success)] font-mono overflow-x-auto">{{ sample.output }}</pre>
+                    </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
     {% endif %}
 
-    <!-- 提交入口 -->
-    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h2 class="text-lg font-semibold text-yellow-400 mb-3">提交代码</h2>
+    <!-- Submit Form -->
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-[var(--warning)] mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            提交代码
+        </h2>
 
         {% if error %}
-        <div class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded mb-4 text-sm">
+        <div class="bg-red-900/50 border border-red-700/50 text-red-200 px-4 py-3 rounded-lg mb-4 text-sm flex items-center gap-2">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             {{ error }}
         </div>
         {% endif %}
@@ -67,9 +114,9 @@
             <input type="hidden" name="problem_id" value="{{ problem.id }}">
 
             <div>
-                <label for="language" class="block text-sm font-medium text-gray-300 mb-1">语言</label>
+                <label for="language" class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">语言</label>
                 <select name="language" id="language" required
-                    class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                    class="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition">
                     <option value="">-- 请选择语言 --</option>
                     <option value="c">C</option>
                     <option value="cpp">C++</option>
@@ -79,16 +126,17 @@
             </div>
 
             <div>
-                <label for="source_code" class="block text-sm font-medium text-gray-300 mb-1">源代码</label>
+                <label for="source_code" class="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">源代码</label>
                 <textarea name="source_code" id="source_code" rows="20" required
-                    class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-green-300 text-sm font-mono focus:outline-none focus:border-blue-500"
+                    class="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg px-4 py-3 text-[var(--success)] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition resize-y"
                     placeholder="在此粘贴您的代码..."></textarea>
             </div>
 
-            <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-500">最大支持 256KB</span>
+            <div class="flex items-center justify-between">
+                <span class="text-xs text-[var(--text-muted)]">最大支持 256KB</span>
                 <button type="submit"
-                    class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded transition text-sm">
+                    class="inline-flex items-center gap-2 bg-[var(--success)] hover:opacity-90 text-white font-semibold px-6 py-2.5 rounded-lg transition text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                     提交
                 </button>
             </div>
