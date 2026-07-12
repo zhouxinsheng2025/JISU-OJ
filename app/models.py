@@ -82,7 +82,7 @@ class Problem(Base):
     """题库题目 — 独立于比赛存在"""
     __tablename__ = "problems"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    pid = Column(String(16), unique=True, nullable=False, index=True)   # P1001
+    pid = Column(String(32), unique=True, nullable=False, index=True)   # P + 时间戳 + 随机后缀
     title = Column(String(128), nullable=False)
     description = Column(Text, default="")
     difficulty = Column(SAEnum(Difficulty), default=Difficulty.EASY)
