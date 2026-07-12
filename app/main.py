@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse, FileResponse
 from app.config import settings
 from app.judge.engine import start_judge_engine
 from app.logging_config import configure_logging
-from app.middleware import rate_limit_middleware
+from app.middleware import RateLimitMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ app = FastAPI(
     redoc_url="/redoc" if not settings.PRODUCTION else None,
 )
 
-app.middleware("http")(rate_limit_middleware)
+app.add_middleware(RateLimitMiddleware)
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
