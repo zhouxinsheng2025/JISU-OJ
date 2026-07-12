@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, ForeignKey, UniqueConstraint, Enum as SAEnum
 from sqlalchemy.orm import DeclarativeBase, relationship
 import enum
@@ -134,7 +134,7 @@ class Submission(Base):
     team_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     language = Column(String(16), nullable=False)
     source_code = Column(Text, nullable=False)
-    submit_time = Column(DateTime, default=datetime.utcnow, nullable=False)
+    submit_time = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     state = Column(SAEnum(SubmissionState), default=SubmissionState.QUEUED, nullable=False)
 
     contest = relationship("Contest", back_populates="submissions")
@@ -177,7 +177,7 @@ class Clarification(Base):
     recipient_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     question = Column(Text, nullable=False)
     answer = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     contest = relationship("Contest", back_populates="clarifications")
     sender = relationship("User", foreign_keys=[sender_id], back_populates="clarifications_sent")

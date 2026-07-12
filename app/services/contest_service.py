@@ -100,6 +100,15 @@ async def get_problems(db: AsyncSession, contest_id: int) -> list[Problem]:
 
 
 async def add_problem_to_contest(db: AsyncSession, contest_id: int, problem_id: int, order: int = 0) -> ContestProblem:
+    # 检查是否已存在
+    existing = await db.execute(
+        select(ContestProblem).where(
+            ContestProblem.contest_id == contest_id,
+            ContestProblem.problem_id == problem_id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        return existing.scalar_one_or_none()
     cp = ContestProblem(contest_id=contest_id, problem_id=problem_id, order=order)
     db.add(cp)
     await db.commit()

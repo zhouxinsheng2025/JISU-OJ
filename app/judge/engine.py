@@ -16,7 +16,7 @@ import logging
 import os
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, text
 from app.config import settings
@@ -189,8 +189,8 @@ async def _judge_submission(submission_id: int, worker_id: int):
                 submission_id=submission.id,
                 result=Verdict.RTE,
                 score=0.0,
-                started=datetime.utcnow(),
-                ended=datetime.utcnow(),
+                started=datetime.now(timezone.utc),
+                ended=datetime.now(timezone.utc),
             )
             db.add(judging)
             submission.state = SubmissionState.DONE
@@ -212,8 +212,8 @@ async def _judge_submission(submission_id: int, worker_id: int):
                 submission_id=submission.id,
                 result=Verdict.RTE,
                 score=0.0,
-                started=datetime.utcnow(),
-                ended=datetime.utcnow(),
+                started=datetime.now(timezone.utc),
+                ended=datetime.now(timezone.utc),
             )
             db.add(judging)
             submission.state = SubmissionState.DONE
@@ -236,7 +236,7 @@ async def _judge_submission(submission_id: int, worker_id: int):
         try:
             judging = Judging(
                 submission_id=submission.id,
-                started=datetime.utcnow(),
+                started=datetime.now(timezone.utc),
             )
             db.add(judging)
             await db.flush()
@@ -254,7 +254,7 @@ async def _judge_submission(submission_id: int, worker_id: int):
                 if not compile_ok:
                     # CE: 存储编译错误信息，让用户可以看到具体错误
                     judging.result = Verdict.CE
-                    judging.ended = datetime.utcnow()
+                    judging.ended = datetime.now(timezone.utc)
                     submission.state = SubmissionState.DONE
                     # 创建一条 JudgeRun 来保存编译错误详情
                     if testcases:
@@ -342,7 +342,7 @@ async def _judge_submission(submission_id: int, worker_id: int):
 
             judging.result = final_verdict
             judging.score = final_score
-            judging.ended = datetime.utcnow()
+            judging.ended = datetime.now(timezone.utc)
             submission.state = SubmissionState.DONE
             await db.commit()
 
@@ -375,7 +375,7 @@ async def _judge_submission(submission_id: int, worker_id: int):
             logger.error("判题异常 submission=%d: %s", submission_id, e, exc_info=True)
             if judging:
                 judging.result = Verdict.RTE
-                judging.ended = datetime.utcnow()
+                judging.ended = datetime.now(timezone.utc)
                 # 创建 JudgeRun 记录异常信息
                 if testcases:
                     try:
@@ -464,8 +464,30 @@ def _calc_penalty(submission, contest, verdict) -> int:
 
 
 async def _update_progress(db: AsyncSession, user_id: int, problem_id: int, verdict: str):
-    """更新用户刷题进度"""
+    """更新用户刷题进度 — 使用 upsert 防竞态"""
     from app.models import UserProgress
+    is_ac = verdict == Verdict.AC.value
+    now = datetime.now(timezone.utc)
+
+    if is_postgresql():
+        from sqlalchemy import text as sa_text
+        await db.execute(sa_text("""
+            INSERT INTO user_progress (user_id, problem_id, total_submissions, ac_count, first_ac_time)
+            VALUES (:uid, :pid, 1, :ac, :fat)
+            ON CONFLICT (user_id, problem_id) DO UPDATE SET
+                total_submissions = user_progress.total_submissions + 1,
+                ac_count = user_progress.ac_count + :ac_inc,
+                first_ac_time = COALESCE(user_progress.first_ac_time, :fat)
+        """), {
+            "uid": user_id, "pid": problem_id,
+            "ac": 1 if is_ac else 0,
+            "ac_inc": 1 if is_ac else 0,
+            "fat": now if is_ac else None,
+        })
+        await db.commit()
+        return
+
+    # SQLite fallback
     result = await db.execute(
         select(UserProgress).where(
             UserProgress.user_id == user_id,
@@ -476,10 +498,9 @@ async def _update_progress(db: AsyncSession, user_id: int, problem_id: int, verd
     if prog is None:
         prog = UserProgress(user_id=user_id, problem_id=problem_id)
         db.add(prog)
-
     prog.total_submissions += 1
-    if verdict == Verdict.AC.value:
+    if is_ac:
         prog.ac_count += 1
         if prog.first_ac_time is None:
-            prog.first_ac_time = datetime.utcnow()
+            prog.first_ac_time = now
     await db.commit()
