@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse, FileResponse
 from app.config import settings
 from app.judge.engine import start_judge_engine
 from app.logging_config import configure_logging
-# from app.middleware import RateLimitMiddleware
+from app.middleware import RateLimitMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +132,7 @@ async def health_check():
 
 
 @app.websocket("/ws/judge-updates")
-async def judge_websocket(websocket):
+async def judge_websocket(websocket: WebSocket):
     """WebSocket 端点 — 判题完成后实时推送结果。"""
     from fastapi import WebSocketDisconnect
     from app.judge.engine import subscribe, unsubscribe
@@ -149,7 +149,8 @@ async def judge_websocket(websocket):
         unsubscribe(queue)
 
 
-# 构建中间件栈 — 直接用 router，跳过 ServerErrorMiddleware
-app.middleware_stack = app.router
+# 构建中间件栈（Starlette 0.37+ 必须手动调用）
+app.middleware_stack = app.build_middleware_stack()
+app.middleware_stack = RateLimitMiddleware(app.middleware_stack)
 
 
