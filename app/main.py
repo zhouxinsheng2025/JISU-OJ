@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse, FileResponse
 from app.config import settings
 from app.judge.engine import start_judge_engine
 from app.logging_config import configure_logging
-from app.middleware import RateLimitMiddleware
+# from app.middleware import RateLimitMiddleware  # 临时禁用排查 WebSocket 403
 
 logger = logging.getLogger(__name__)
 
@@ -147,5 +147,3 @@ async def judge_websocket(websocket):
         unsubscribe(queue)
 
 
-# 在路由全部注册后，外层包装限流中间件（不影响 WebSocket）
-app.middleware_stack = RateLimitMiddleware(app.middleware_stack)
