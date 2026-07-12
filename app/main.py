@@ -138,12 +138,14 @@ async def judge_websocket(websocket):
     from app.judge.engine import subscribe, unsubscribe
 
     await websocket.accept()
+    logger.info("WebSocket 客户端已连接")
     queue = subscribe()
     try:
         while True:
             event = await queue.get()
             await websocket.send_json(event)
     except (WebSocketDisconnect, Exception):
+        logger.info("WebSocket 客户端断开")
         unsubscribe(queue)
 
 
