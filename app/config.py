@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     COMPILE_TIME_LIMIT: int = 30
     SOURCE_SIZE_LIMIT: int = 256 * 1024
     OUTPUT_SIZE_LIMIT: int = 8 * 1024 * 1024
+    UPLOAD_SIZE_LIMIT: int = 8 * 1024 * 1024  # ZIP/CSV 上传限制 8MB
 
     # 目录
     DATA_DIR: str = "data/testcases"

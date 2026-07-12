@@ -374,9 +374,11 @@ async def create_bank_problem(
     user: User = Depends(require_role("jury")),
     db: AsyncSession = Depends(get_db),
 ):
-    # 自动生成 pid
-    from datetime import datetime
-    pid = f"P{datetime.utcnow().strftime('%y%m%d%H%M%S')}"
+    # 自动生成 pid (加入4位随机字符防并发冲突)
+    from datetime import datetime, timezone
+    import secrets
+    suffix = secrets.token_hex(2)  # 4 hex chars
+    pid = f"P{datetime.now(timezone.utc).strftime('%y%m%d%H%M%S')}{suffix}"
 
     problem = Problem(
         pid=pid,
@@ -746,7 +748,7 @@ async def rejudge_submission(
     user: User = Depends(require_role("jury")),
     db: AsyncSession = Depends(get_db),
 ):
-    from app.models import Submission, SubmissionState, Judging, JudgeRun
+    from app.models import Submission, SubmissionState, Judging, JudgeRun, ScoreboardCache
 
     result = await db.execute(select(Submission).where(Submission.id == submission_id))
     sub = result.scalar_one_or_none()
@@ -762,6 +764,17 @@ async def rejudge_submission(
             for run in runs_result.scalars().all():
                 await db.delete(run)
             await db.delete(judging)
+        # 清除计分板缓存，避免旧AC标记残留
+        sb_result = await db.execute(
+            select(ScoreboardCache).where(
+                ScoreboardCache.contest_id == sub.contest_id,
+                ScoreboardCache.team_id == sub.team_id,
+                ScoreboardCache.problem_id == sub.problem_id,
+            )
+        )
+        sb_entry = sb_result.scalar_one_or_none()
+        if sb_entry:
+            await db.delete(sb_entry)
         sub.state = SubmissionState.QUEUED
         await db.commit()
     return RedirectResponse(

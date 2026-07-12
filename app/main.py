@@ -21,7 +21,13 @@ STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
 @app.get("/static/{filename:path}")
 async def static_file(filename: str):
-    return FileResponse(os.path.join(STATIC_DIR, filename))
+    # 防路径遍历：规范化路径后校验仍在 STATIC_DIR 内
+    safe_path = os.path.realpath(os.path.join(STATIC_DIR, filename))
+    if not safe_path.startswith(os.path.realpath(STATIC_DIR) + os.sep) \
+       and safe_path != os.path.realpath(STATIC_DIR):
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse("Not Found", status_code=404)
+    return FileResponse(safe_path)
 
 
 @app.on_event("startup")

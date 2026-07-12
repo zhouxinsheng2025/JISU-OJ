@@ -74,7 +74,7 @@ ssh_cmd(c, f"cd {APP} && {PY} -m pip install -r requirements.txt -i https://pypi
 print("  stopping old...")
 ssh_cmd(c, "fuser -k 80/tcp 2>/dev/null; sleep 2; echo 'old stopped'", timeout=10)
 print("  starting gunicorn (4 workers)...")
-ssh_cmd(c, f"cd {APP} && nohup {PY} -m gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 4 --bind 0.0.0.0:80 --timeout 120 --access-logfile - --error-logfile - > server.log 2>&1 < /dev/null & echo 'started'", timeout=10)
+ssh_cmd(c, f"cd {APP} && nohup {PY} -m gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 2 --bind 0.0.0.0:80 --timeout 120 --access-logfile - --error-logfile - > server.log 2>&1 < /dev/null & echo 'started'", timeout=10)
 time.sleep(5)
 
 # 5. 验证

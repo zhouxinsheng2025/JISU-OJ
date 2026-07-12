@@ -54,7 +54,12 @@ async def login(
     redirect_url = "/jury/" if user.role.value == "jury" else "/team/"
 
     response = RedirectResponse(url=redirect_url, status_code=303)
-    response.set_cookie(key="access_token", value=token, httponly=True, max_age=86400)
+    response.set_cookie(
+        key="access_token", value=token,
+        httponly=True, samesite="lax", path="/",
+        max_age=86400,
+        secure=request.url.scheme == "https",
+    )
     return response
 
 

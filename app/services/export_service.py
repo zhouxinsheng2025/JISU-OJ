@@ -146,12 +146,14 @@ async def export_contest_excel(db: AsyncSession, contest_id: int) -> bytes:
                     ws.cell(row=row, column=c).fill = gold_fill
 
     # 列宽
+    from openpyxl.utils import get_column_letter
     ws.column_dimensions['A'].width = 6
     ws.column_dimensions['B'].width = 18
     for pi in range(len(problems)):
-        ws.column_dimensions[chr(67 + pi) if pi < 24 else 'A'].width = 14
-    ws.column_dimensions[chr(67 + len(problems))].width = 10
-    ws.column_dimensions[chr(68 + len(problems))].width = 12
+        col_letter = get_column_letter(3 + pi)  # C=3, D=4, ...
+        ws.column_dimensions[col_letter].width = 14
+    ws.column_dimensions[get_column_letter(3 + len(problems))].width = 10
+    ws.column_dimensions[get_column_letter(4 + len(problems))].width = 12
 
     # 冻结表头
     ws.freeze_panes = 'A5'

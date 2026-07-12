@@ -401,7 +401,28 @@ async def _judge_submission(submission_id: int, worker_id: int):
 
 
 async def _update_scoreboard(db: AsyncSession, submission: Submission, verdict: str, score: float, contest: Contest):
-    """更新计分板缓存"""
+    """更新计分板缓存 — 使用 upsert 防止竞态条件"""
+    # 原子 upsert: INSERT OR UPDATE
+    if is_postgresql():
+        from sqlalchemy import text as sa_text
+        await db.execute(sa_text("""
+            INSERT INTO scoreboard (contest_id, team_id, problem_id, submissions, is_correct, score, total_time)
+            VALUES (:cid, :tid, :pid, 1, :correct, :score, :ttime)
+            ON CONFLICT (contest_id, team_id, problem_id) DO UPDATE SET
+                submissions = scoreboard.submissions + 1,
+                is_correct = CASE WHEN scoreboard.is_correct THEN TRUE ELSE :correct END,
+                score = GREATEST(scoreboard.score, :score),
+                total_time = CASE WHEN scoreboard.is_correct THEN scoreboard.total_time ELSE :ttime END
+        """), {
+            "cid": submission.contest_id, "tid": submission.team_id, "pid": submission.problem_id,
+            "correct": verdict == Verdict.AC.value,
+            "score": score,
+            "ttime": _calc_penalty(submission, contest, verdict),
+        })
+        await db.commit()
+        return
+
+    # SQLite fallback: SELECT + INSERT/UPDATE
     result = await db.execute(
         select(ScoreboardCache).where(
             ScoreboardCache.contest_id == submission.contest_id,
@@ -427,13 +448,19 @@ async def _update_scoreboard(db: AsyncSession, submission: Submission, verdict: 
             return
         entry.is_correct = True
         entry.score = max(entry.score, score)
-        if contest:
-            elapsed = int((submission.submit_time - contest.start_time).total_seconds() / 60)
-            entry.total_time = elapsed + (entry.submissions - 1) * 20
+        entry.total_time = _calc_penalty(submission, contest, verdict)
     else:
         entry.score = max(entry.score, score)
 
     await db.commit()
+
+
+def _calc_penalty(submission, contest, verdict) -> int:
+    """计算 ICPC 罚时（分钟）"""
+    if contest and verdict == Verdict.AC.value and submission.submit_time:
+        elapsed = int((submission.submit_time - contest.start_time).total_seconds() / 60)
+        return max(0, elapsed)
+    return 0
 
 
 async def _update_progress(db: AsyncSession, user_id: int, problem_id: int, verdict: str):

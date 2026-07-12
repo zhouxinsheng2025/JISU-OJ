@@ -108,6 +108,10 @@ class ContestProblem(Base):
     contest = relationship("Contest", back_populates="problems")
     problem = relationship("Problem", back_populates="contest_links")
 
+    __table_args__ = (
+        UniqueConstraint("contest_id", "problem_id", name="uq_contest_problem"),
+    )
+
 
 class TestCase(Base):
     __tablename__ = "testcases"
@@ -205,3 +209,7 @@ class UserProgress(Base):
 
     user = relationship("User", back_populates="progress")
     problem = relationship("Problem", back_populates="progress")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "problem_id", name="uq_user_problem_progress"),
+    )
