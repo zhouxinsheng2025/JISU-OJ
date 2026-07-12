@@ -14,9 +14,6 @@ app = FastAPI(
     redoc_url="/redoc" if not settings.PRODUCTION else None,
 )
 
-# 限流中间件 — 手动构建为顶层 ASGI app
-app = RateLimitMiddleware(app)
-
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
 
@@ -148,3 +145,7 @@ async def judge_websocket(websocket):
             await websocket.send_json(event)
     except (WebSocketDisconnect, Exception):
         unsubscribe(queue)
+
+
+# 在路由全部注册后，外层包装限流中间件（不影响 WebSocket）
+app.middleware_stack = RateLimitMiddleware(app.middleware_stack)
