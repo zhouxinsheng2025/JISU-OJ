@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +15,15 @@ TEMPLATE_DIR = "auth"
 
 @router.get("/login")
 async def login_page(request: Request):
-    return templates.TemplateResponse(f"{TEMPLATE_DIR}/login.html", {"request": request})
+    photo_dir = os.path.join(os.path.dirname(__file__), "..", "static", "photos")
+    photos = []
+    if os.path.isdir(photo_dir):
+        exts = {".jpg", ".jpeg", ".png", ".webp"}
+        photos = [f for f in os.listdir(photo_dir) if os.path.splitext(f)[1].lower() in exts]
+    return templates.TemplateResponse(
+        f"{TEMPLATE_DIR}/login.html",
+        {"request": request, "photos": photos}
+    )
 
 
 @router.post("/login")
@@ -30,14 +39,14 @@ async def login(
     if user is None or not verify_password(password, user.password_hash):
         return templates.TemplateResponse(
             f"{TEMPLATE_DIR}/login.html",
-            {"request": request, "error": "用户名或密码错误"},
+            {"request": request, "error": "用户名或密码错误", "photos": []},
             status_code=401,
         )
 
     if not user.enabled:
         return templates.TemplateResponse(
             f"{TEMPLATE_DIR}/login.html",
-            {"request": request, "error": "账号已被禁用"},
+            {"request": request, "error": "账号已被禁用", "photos": []},
             status_code=403,
         )
 
