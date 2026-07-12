@@ -200,15 +200,40 @@ async def _judge_submission(submission_id: int, worker_id: int):
                     submission.source_code, submission.language, work_dir
                 )
                 if not compile_ok:
+                    # CE: 存储编译错误信息，让用户可以看到具体错误
                     judging.result = Verdict.CE
                     judging.ended = datetime.utcnow()
                     submission.state = SubmissionState.DONE
+                    # 创建一条 JudgeRun 来保存编译错误详情
+                    if testcases:
+                        ce_run = JudgeRun(
+                            judging_id=judging.id,
+                            testcase_id=testcases[0].id,
+                            result=Verdict.CE.value,
+                            runtime=0.0,
+                            output=compile_output or "(无编译输出)",
+                        )
+                        db.add(ce_run)
                     await db.commit()
                     return
 
             # ── 运行测试点 ──
             run_results = []
+            ce_encountered = False
             for tc in testcases:
+                # 如果已经遇到 CE（Docker模式），跳过剩余测试点
+                if ce_encountered:
+                    run = JudgeRun(
+                        judging_id=judging.id,
+                        testcase_id=tc.id,
+                        result=Verdict.CE.value,
+                        runtime=0.0,
+                        output="(同上编译错误)",
+                    )
+                    db.add(run)
+                    run_results.append((Verdict.CE.value, 0.0))
+                    continue
+
                 if settings.USE_DOCKER_SANDBOX:
                     # Docker sandbox: compile + run in isolated container
                     from app.judge.sandbox import run_in_container
@@ -223,6 +248,12 @@ async def _judge_submission(submission_id: int, worker_id: int):
                         tc.input, problem.time_limit, problem.memory_limit,
                     )
 
+                # Docker 模式下 CE 短路：第一个 CE 后跳过后续测试点
+                if verdict == "CE" and settings.USE_DOCKER_SANDBOX:
+                    ce_encountered = True
+                    # 将编译错误信息保存到第一个 CE 测试点的 output 中
+                    error_msg = stderr if stderr else "(编译错误，无详细信息)"
+
                 # Log abnormal results for debugging
                 if verdict in ("RTE", "CE", "MLE", "OLE"):
                     logger.warning(
@@ -234,12 +265,15 @@ async def _judge_submission(submission_id: int, worker_id: int):
                 if verdict is None:
                     verdict = compare_output(output, tc.output)
 
+                # For CE in Docker mode, use the compiler error as output
+                run_output = error_msg if (verdict == "CE" and settings.USE_DOCKER_SANDBOX) else output
+
                 run = JudgeRun(
                     judging_id=judging.id,
                     testcase_id=tc.id,
                     result=verdict,
                     runtime=runtime,
-                    output=output,
+                    output=run_output,
                 )
                 db.add(run)
                 run_results.append((verdict, runtime))
@@ -274,11 +308,35 @@ async def _judge_submission(submission_id: int, worker_id: int):
                 "score": final_score,
             })
 
+        except asyncio.CancelledError:
+            # Worker 被取消（正常关闭）
+            logger.info("Worker-%d 被取消，正在处理的 submission=%d 已回退为 QUEUED", worker_id, submission_id)
+            if judging:
+                judging.result = None
+            submission.state = SubmissionState.QUEUED
+            try:
+                await db.commit()
+            except Exception:
+                pass
+            raise
         except Exception as e:
-            logger.error("判题失败 submission=%d: %s", submission_id, e, exc_info=True)
+            logger.error("判题异常 submission=%d: %s", submission_id, e, exc_info=True)
             if judging:
                 judging.result = Verdict.RTE
                 judging.ended = datetime.utcnow()
+                # 创建 JudgeRun 记录异常信息
+                if testcases:
+                    try:
+                        err_run = JudgeRun(
+                            judging_id=judging.id,
+                            testcase_id=testcases[0].id,
+                            result=Verdict.RTE.value,
+                            runtime=0.0,
+                            output=f"判题系统内部错误: {str(e)[:500]}",
+                        )
+                        db.add(err_run)
+                    except Exception:
+                        pass
             submission.state = SubmissionState.DONE
             try:
                 await db.commit()

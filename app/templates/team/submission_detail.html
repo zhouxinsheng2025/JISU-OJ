@@ -92,6 +92,21 @@
         <pre class="bg-[var(--bg-primary)] rounded-lg p-4 text-sm text-[var(--success)] font-mono overflow-x-auto border border-[var(--border)] max-h-96 overflow-y-auto"><code>{{ submission.source_code }}</code></pre>
     </div>
 
+    <!-- CE: 显示编译错误详情 -->
+    {% if judging and judging.result == "CE" %}
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-purple-400 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+            编译错误
+        </h2>
+        {% if runs and runs[0].output %}
+        <pre class="bg-[var(--bg-primary)] rounded-lg p-4 text-sm text-red-300 font-mono overflow-x-auto border border-red-500/30 max-h-80 overflow-y-auto whitespace-pre-wrap">{{ runs[0].output }}</pre>
+        {% else %}
+        <p class="text-[var(--text-muted)] text-sm">编译失败，请检查代码语法。</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Testcase Results -->
     {% if runs %}
     <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
@@ -106,7 +121,8 @@
                         <th class="px-4 py-2.5 font-medium">#</th>
                         <th class="px-4 py-2.5 font-medium">测试点</th>
                         <th class="px-4 py-2.5 font-medium">结果</th>
-                        <th class="px-4 py-2.5 font-medium">运行时间</th>
+                        <th class="px-4 py-2.5 font-medium">耗时</th>
+                        <th class="px-4 py-2.5 font-medium">输出</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-[var(--border)]">
@@ -114,58 +130,52 @@
                     <tr class="hover:bg-[var(--bg-hover)] transition-colors">
                         <td class="px-4 py-2.5 text-[var(--text-muted)] font-mono text-xs">{{ loop.index }}</td>
                         <td class="px-4 py-2.5 text-[var(--text-secondary)] text-xs">
-                            {% if run.testcase %}
-                            {{ run.testcase.id }}
-                            {% else %}
-                            测试点 #{{ run.testcase_id }}
-                            {% endif %}
+                            {% if run.testcase %}测试点 #{{ run.testcase.id }}{% else %}#{{ run.testcase_id }}{% endif %}
                         </td>
                         <td class="px-4 py-2.5">
-                            {% if run.result %}
-                                {% if run.result == "AC" %}
-                                <span class="inline-flex items-center gap-1 text-[var(--success)] font-bold font-mono text-xs">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    AC
-                                </span>
-                                {% elif run.result == "WA" %}
-                                <span class="text-[var(--danger)] font-bold font-mono text-xs">WA</span>
-                                {% elif run.result == "TLE" %}
-                                <span class="text-[var(--warning)] font-bold font-mono text-xs">TLE</span>
-                                {% elif run.result == "MLE" %}
-                                <span class="text-[var(--warning)] font-bold font-mono text-xs">MLE</span>
-                                {% elif run.result == "RTE" %}
-                                <span class="text-orange-400 font-bold font-mono text-xs">RTE</span>
-                                {% elif run.result == "CE" %}
-                                <span class="text-purple-400 font-bold font-mono text-xs">CE</span>
-                                {% elif run.result == "OLE" %}
-                                <span class="text-pink-400 font-bold font-mono text-xs">OLE</span>
-                                {% elif run.result == "PE" %}
-                                <span class="text-indigo-400 font-bold font-mono text-xs">PE</span>
-                                {% else %}
-                                <span class="text-[var(--text-muted)] text-xs">{{ run.result }}</span>
-                                {% endif %}
+                            {% if run.result == "AC" %}
+                            <span class="inline-flex items-center gap-1 text-[var(--success)] font-bold font-mono text-xs">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> AC
+                            </span>
+                            {% elif run.result == "WA" %}
+                            <span class="text-[var(--danger)] font-bold font-mono text-xs">WA</span>
+                            {% elif run.result == "TLE" %}
+                            <span class="text-[var(--warning)] font-bold font-mono text-xs">TLE</span>
+                            {% elif run.result == "MLE" %}
+                            <span class="text-[var(--warning)] font-bold font-mono text-xs">MLE</span>
+                            {% elif run.result == "RTE" %}
+                            <span class="text-orange-400 font-bold font-mono text-xs">RTE</span>
+                            {% elif run.result == "CE" %}
+                            <span class="text-purple-400 font-bold font-mono text-xs">CE</span>
+                            {% elif run.result == "OLE" %}
+                            <span class="text-pink-400 font-bold font-mono text-xs">OLE</span>
+                            {% elif run.result == "PE" %}
+                            <span class="text-indigo-400 font-bold font-mono text-xs">PE</span>
                             {% else %}
-                            <span class="text-[var(--text-muted)] text-xs">-</span>
+                            <span class="text-[var(--text-muted)] text-xs">{{ run.result }}</span>
                             {% endif %}
                         </td>
-                        <td class="px-4 py-2.5 font-mono text-[var(--text-secondary)] text-xs">{{ run.runtime }}s</td>
+                        <td class="px-4 py-2.5 font-mono text-[var(--text-secondary)] text-xs">
+                            {% if run.runtime and run.runtime > 0 %}{{ "%.3f"|format(run.runtime) }}s{% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-2.5 max-w-xs">
+                            {% if run.output and run.result != "AC" %}
+                            <pre class="text-xs text-[var(--text-muted)] font-mono whitespace-pre-wrap max-h-20 overflow-y-auto">{{ run.output[:200] }}</pre>
+                            {% elif run.result == "AC" %}
+                            <span class="text-xs text-[var(--text-muted)]">-</span>
+                            {% else %}
+                            <span class="text-xs text-[var(--text-muted)]">-</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-    {% elif judging and judging.result == "CE" %}
+    {% elif submission.state == "done" and judging and not runs %}
     <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
-        <h2 class="text-lg font-semibold text-purple-400 mb-3 flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
-            编译错误
-        </h2>
-        <p class="text-[var(--text-muted)] text-sm">编译错误，无测试点执行结果。</p>
-    </div>
-    {% elif submission.state == "done" and judging and runs|length == 0 %}
-    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-6">
-        <p class="text-[var(--text-muted)] text-sm">判题已完成但暂无测试点详情。</p>
+        <p class="text-[var(--text-muted)] text-sm">判题已完成但暂无测试点详情。可能为系统内部错误，请联系管理员。</p>
     </div>
     {% endif %}
 
