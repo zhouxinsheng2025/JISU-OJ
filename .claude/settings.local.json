@@ -90,7 +90,19 @@
       "Bash(python3 *)",
       "Bash(expect *)",
       "Bash(python -c \"import paramiko; print\\('OK'\\)\")",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(chcp 65001)",
+      "Bash(PYTHONIOENCODING=utf-8 python *)",
+      "Bash(tar -czf ../jisu-oj-deploy.tar.gz --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' --exclude='judge.db*' --exclude='runs/*' --exclude='.claude' --exclude='.superpowers' --exclude='*.output' .)",
+      "Bash(tar -czf ../jisu-oj-final.tar.gz --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' --exclude='judge.db*' --exclude='runs/*' --exclude='.claude' --exclude='.superpowers' --exclude='*.output' --exclude='deploy_*.py' --exclude='check_*.py' --exclude='create_*.py' --exclude='debug_*.py' --exclude='*_fix*.py' --exclude='force_*.py' --exclude='quick_fix.py' --exclude='remote_deploy.py' --exclude='test_deploy.py' --exclude='verify_deploy.py' --exclude='seed_*.py' --exclude='full_seed.py' --exclude='e2e_test.py' --exclude='final_test.py' --exclude='*_srv*' --exclude='server_*' --exclude='srv_*' --exclude='photoes' .)",
+      "Read(//tmp/**)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:jishuzhan.net)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(mkdir -p app/static/photos)",
+      "Bash(mv photos/*.jpg app/static/photos/)",
+      "Bash(rmdir photos *)"
     ]
   }
 }
