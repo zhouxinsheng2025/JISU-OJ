@@ -350,7 +350,7 @@ async def _judge_submission(submission_id: int, worker_id: int):
             await _update_scoreboard(db, submission, final_verdict, final_score, contest)
             await _update_progress(db, submission.team_id, submission.problem_id, final_verdict)
 
-            # 通知 WebSocket 订阅者
+            # 通知 WebSocket 订阅者（含完整判题结果）
             await _publish({
                 "type": "judging_done",
                 "submission_id": submission.id,
@@ -358,6 +358,9 @@ async def _judge_submission(submission_id: int, worker_id: int):
                 "problem_id": submission.problem_id,
                 "verdict": final_verdict,
                 "score": final_score,
+                "problem_title": problem.title,
+                "language": submission.language,
+                "runtime": max((r[1] for r in run_results), default=0.0),
             })
 
         except asyncio.CancelledError:

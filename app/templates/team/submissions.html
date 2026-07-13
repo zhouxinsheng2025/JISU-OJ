@@ -124,18 +124,25 @@
 </div>
 
 <script>
-// WebSocket live update: auto-refresh when judging completes
+// WebSocket — Toast 通知 + 智能刷新
 (function() {
     var hasPending = {{ 'true' if submission_data|selectattr('submission.state', 'in', ['queued', 'judging'])|list|length > 0 else 'false' }};
 
-    // Fallback: poll every 5s if pending submissions exist
-    if (hasPending) {
-        setTimeout(function() {
-            location.reload();
-        }, 5000);
+    function showToast(verdict, problem, score) {
+        var colors = {'AC':'#22c55e','WA':'#ef4444','TLE':'#f59e0b','MLE':'#f59e0b','RTE':'#fb923c','CE':'#c084fc'};
+        var color = colors[verdict] || '#94a3b8';
+        var toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm text-white font-medium';
+        toast.style.cssText = 'background:' + color + '; opacity:0; transform:translateX(20px); transition:all 0.3s;';
+        toast.textContent = (problem || '') + ' → ' + verdict + (score !== undefined ? ' (' + score + '分)' : '');
+        document.body.appendChild(toast);
+        requestAnimationFrame(function() { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; });
+        setTimeout(function() { toast.style.opacity = '0'; toast.style.transform = 'translateX(20px)'; setTimeout(function() { toast.remove(); }, 300); }, 4000);
     }
 
-    // WebSocket: reload immediately when judging_done received
+    // Polling fallback
+    if (hasPending) { setTimeout(function() { location.reload(); }, 5000); }
+
     try {
         var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
         var ws = new WebSocket(proto + '//' + location.host + '/ws/judge-updates');
@@ -143,7 +150,8 @@
             try {
                 var data = JSON.parse(event.data);
                 if (data.type === 'judging_done') {
-                    location.reload();
+                    showToast(data.verdict, data.problem_title, data.score);
+                    setTimeout(function() { location.reload(); }, 1500);
                 }
             } catch(e) {}
         };
